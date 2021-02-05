@@ -39,7 +39,7 @@ nSignals = 1
 start = 0
 
 # get data from Bernet data.mat 
-file_signal = open("file.csv", "r")
+file_signal = open("data.csv", "r")
 
 file_data = list(map(float, file_signal.readline().split(",")[:50]))
 x_input = 10
@@ -211,6 +211,7 @@ class WeightRecorder(object):
         self._weights = []
 
     def __call__(self, t):
+        print(t)
         if type(self.projection) != list:
             self._weights.append(self.projection.get('weight', format='list', with_address=False))
         elif type(self.projection) == list:
@@ -245,7 +246,6 @@ class STDP_Input_Inter(object):
         self.delta_w_post = -5.5*self.delta_w_pair
     
     def __call__(self, t):
-        print(t)
         print("input inter start", datetime.datetime.now())
         try : 
             # presynaptic spike times
@@ -390,9 +390,9 @@ class Inhibition_Attention_Output(object):
         print("Inhibition start", datetime.datetime.now())
         try:
             th = self.target.get("v_thresh")
-            print(self.v)
+            print("v",self.v)
             self.v = th * self.f_inhib 
-            print(self.v)
+            print("v",self.v)
             self.target.initialize(v=self.v)
         except IndexError: 
             pass
@@ -428,8 +428,10 @@ Inter_data = Intermediate.get_data().segments[0]
 print("Intermediate spike times : %s" % Inter_data.spiketrains)
 Output_data = Output.get_data().segments[0]
 print("Output spike times: %s" % Output_data.spiketrains)
-Attention_data = Attention.get_data().segments[0]
-print("Attention spike times : %s" % Attention_data.spiketrains)
+
+if options.attention :
+    Attention_data = Attention.get_data().segments[0]
+    print("Attention spike times : %s" % Attention_data.spiketrains)
 
 weights = weight_recorder.get_weights()
 final_weights = np.array(weights[-1])
@@ -450,32 +452,58 @@ if options.fit_curve:
 
 if options.plot_figure:
     figure_filename = filename.replace("pkl", "png")
-    Figure(
-        # raster plot of the Input neuron spike times
-        Panel(Input_data.spiketrains, ylabel="Input spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
-        # raster plot of the Inter neuron spike times
-        Panel(Inter_data.spiketrains, ylabel="Intermediate spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
-        # raster plot of the Output neuron spike times
-        Panel(Output_data.spiketrains, ylabel="Output spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
-        
-        # raster plot of the Attention neuron spike times
-        Panel(Attention_data.spiketrains, ylabel="Attention spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+    if options.attention :
+        Figure(
+            # raster plot of the Input neuron spike times
+            Panel(Input_data.spiketrains, ylabel="Input spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+            # raster plot of the Inter neuron spike times
+            Panel(Inter_data.spiketrains, ylabel="Intermediate spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+            # raster plot of the Output neuron spike times
+            Panel(Output_data.spiketrains, ylabel="Output spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+            
+            # raster plot of the Attention neuron spike times
+            Panel(Attention_data.spiketrains, ylabel="Attention spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
 
-        # membrane potential of the postsynaptic neuron
-        Panel(Inter_data.filter(name='v')[0], ylabel="Membrane potential (mV)", yticks=True, xlim=(0, t_data), linewidth=0.2),
-        
-        # evolution of the synaptic weights with time
-        Panel(weights, xticks=True, yticks=True, xlabel="Time (ms)", ylabel="Intermediate Output Weight",
-                legend=False, xlim=(0, t_data)),
-        # # scatterplot of the final weight of each synapse against the relative
-        # # timing of pre- and postsynaptic spikes for that synapse
-        # Panel(plasticity_data,
-        #         xticks=True, yticks=True, markersize=0.2, xlim=(-Input.size*Intermediate.size / 2 * dt, Input.size*Intermediate.size / 2 * dt),
-        #         ylim=(0.9 * final_weights.min(), 1.1 * final_weights.max()),
-        #         xlabel="t_post - t_pre (ms)", ylabel="Final weight (nA)"),
-        title="Visual attention - Bernet et al. (2018)"
-        # annotations="Simulated with %s" % options.simulator.upper()
-    ).save(figure_filename)
+            # membrane potential of the postsynaptic neuron
+            Panel(Inter_data.filter(name='v')[0], ylabel="Membrane potential (mV)", yticks=True, xlim=(0, t_data), linewidth=0.2),
+            
+            # evolution of the synaptic weights with time
+            Panel(weights, xticks=True, yticks=True, xlabel="Time (ms)", ylabel="Intermediate Output Weight",
+                    legend=False, xlim=(0, t_data)),
+            # # scatterplot of the final weight of each synapse against the relative
+            # # timing of pre- and postsynaptic spikes for that synapse
+            # Panel(plasticity_data,
+            #         xticks=True, yticks=True, markersize=0.2, xlim=(-Input.size*Intermediate.size / 2 * dt, Input.size*Intermediate.size / 2 * dt),
+            #         ylim=(0.9 * final_weights.min(), 1.1 * final_weights.max()),
+            #         xlabel="t_post - t_pre (ms)", ylabel="Final weight (nA)"),
+            title="Visual attention - Bernet et al. (2018)",
+            annotations="Simulated with %s" % options.simulator.upper()
+        ).save(figure_filename)
+    else : 
+        Figure(
+            # raster plot of the Input neuron spike times
+            Panel(Input_data.spiketrains, ylabel="Input spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+            # raster plot of the Inter neuron spike times
+            Panel(Inter_data.spiketrains, ylabel="Intermediate spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+            # raster plot of the Output neuron spike times
+            Panel(Output_data.spiketrains, ylabel="Output spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+            
+            # membrane potential of the postsynaptic neuron
+            Panel(Inter_data.filter(name='v')[0], ylabel="Membrane potential (mV)", yticks=True, xlim=(0, t_data), linewidth=0.2),
+            
+            # evolution of the synaptic weights with time
+            Panel(weights, xticks=True, yticks=True, xlabel="Time (ms)", ylabel="Intermediate Output Weight",
+                    legend=False, xlim=(0, t_data)),
+            # # scatterplot of the final weight of each synapse against the relative
+            # # timing of pre- and postsynaptic spikes for that synapse
+            # Panel(plasticity_data,
+            #         xticks=True, yticks=True, markersize=0.2, xlim=(-Input.size*Intermediate.size / 2 * dt, Input.size*Intermediate.size / 2 * dt),
+            #         ylim=(0.9 * final_weights.min(), 1.1 * final_weights.max()),
+            #         xlabel="t_post - t_pre (ms)", ylabel="Final weight (nA)"),
+            title="Visual attention - Bernet et al. (2018)",
+            annotations="Simulated with %s" % options.simulator.upper()
+        ).save(figure_filename)
+
     print(figure_filename)
 """
 **************************************************************************************************
