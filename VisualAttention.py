@@ -22,6 +22,7 @@ import datetime
 ################# CONFIGURE SIMULATOR ############
 
 sim, options = get_simulator(("--plot-figure", "Plot the simulation results to a file", {"action": "store_true"}),
+                             ("--plot-signal", "Plot the input signal and display", {"action": "store_true"}),
                              ("--fit-curve", "Calculate the best-fit curve to the weight-delta_t measurements", {"action": "store_true"}),
                              ("--attention","Run the network with the attention neuron", {"action": "store_true"}),
                              ("--dendritic-delay-fraction", "What fraction of the total transmission delay is due to dendritic propagation", {"default": 1}),
@@ -40,8 +41,20 @@ start = 0
 
 # get data from Bernet data.mat 
 file_signal = open("data.csv", "r")
+line_signal = file_signal.readline()
 
-file_data = list(map(float, file_signal.readline().split(",")[:50]))
+if options.plot_signal :
+    for (i,j) in [(50,1),(100,2),(1000,3), (10000,4)] :
+        file_data = list(map(float, line_signal.split(",")[:i]))
+        plt.subplot(410+j)
+        plt.plot(file_data)
+        plt.title("Input signal over "+str(i)+" timesteps")
+        plt.xlabel("Simulation timesteps")
+    plt.subplots_adjust(hspace=1)
+    plt.show()
+
+
+file_data = list(map(float, line_signal.split(",")[:100]))
 x_input = 10
 y_input = math.ceil(max(file_data) - min(file_data))
 t_data = len(file_data) - x_input
@@ -419,7 +432,7 @@ print("SIMULATION DONE")
 From example "simple_STDP.py" on : http://neuralensemble.org/docs/PyNN/examples/simple_STDP.html
 adapted to Input-Intermediate synapse
 """
-filename = normalized_filename("Results", "Bernet_attention", "pkl", options.simulator)
+filename = normalized_filename("Results", "Bernert_attention", "pkl", options.simulator)
 # Output.write_data(filename, annotations={'script_name': __file__})
 
 Input_data = Input.get_data().segments[0]
@@ -500,7 +513,7 @@ if options.plot_figure:
             #         xticks=True, yticks=True, markersize=0.2, xlim=(-Input.size*Intermediate.size / 2 * dt, Input.size*Intermediate.size / 2 * dt),
             #         ylim=(0.9 * final_weights.min(), 1.1 * final_weights.max()),
             #         xlabel="t_post - t_pre (ms)", ylabel="Final weight (nA)"),
-            title="Visual attention - Bernet et al. (2018)",
+            title="Visual attention - Bernert et Yvert (2018)",
             annotations="Simulated with %s" % options.simulator.upper()
         ).save(figure_filename)
 
