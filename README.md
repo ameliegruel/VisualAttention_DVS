@@ -11,6 +11,7 @@ The arguments are the following :
 - `nest` : defines the SNN simulator to be used by this script. It can be NEST, NEURON, Brian2, etc. Here we used NEST. 
 - `--attention` :  if present, the network runs using the attention neuron. Thanks to this neuron, the visual attention takes place. Removing this argument allows you to compare the output of the network without attention. 
 - `--plot-figure` : if present, the results are saved in the Results directory in PNG files. 
+- `--plot-signal` : if present, the input signal is plot over 50, 100, 1000 and 10000 timesteps and displayed in a Matplotlib window. 
 
 This script runs on Python3 and requires the following libraries to be installed : 
 - NEST
