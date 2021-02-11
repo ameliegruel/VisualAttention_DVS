@@ -145,7 +145,6 @@ for s in range(3):    # 50 synapses with delay from 1 to 50
             w = np.random.uniform(0, 1, (Intermediate.size, Output.size))
         elif action == "inhibitory":
             w = np.zeros((Intermediate.size, Output.size))
-            delta_w_pair = -0.05
 
         conn = sim.AllToAllConnector(
             allow_self_connections=False # no autapses
