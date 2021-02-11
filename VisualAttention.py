@@ -7,7 +7,6 @@ From "An Attention-Based Spiking Neural Network for Unsupervised Spike-Sorting" 
 Run as : $ python Visual_attention.py nest
 """
 
-from pyNN.nest import *
 from pyNN.space import *
 from pyNN.parameters import Sequence
 from pyNN.utility import get_simulator, init_logging, normalized_filename
@@ -31,8 +30,14 @@ sim, options = get_simulator(("--plot-figure", "Plot the simulation results to a
 if options.debug:
     init_logging(None, debug=True)
 
+if sim == "nest":
+    from pyNN.nest import *
+elif sim == "spinnaker":
+    import pyNN.spiNNaker as sim
+
 dt = 1/80000
 sim.setup(timestep=0.01)
+
 
 ###############################################  DATA   ########################################################
 
@@ -126,7 +131,7 @@ Conn_input_inter = sim.Projection(
 # connection WTA inter
 
 FixedInhibitory_WTA = sim.StaticSynapse(weight=0)
-WTA = Projection(
+WTA = sim.Projection(
     Intermediate, Intermediate,
     connector=sim.AllToAllConnector(allow_self_connections=False),
     synapse_type=FixedInhibitory_WTA,
