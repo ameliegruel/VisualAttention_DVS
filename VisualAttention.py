@@ -61,15 +61,21 @@ if options.plot_signal :
 
 file_data = list(map(float, line_signal.split(",")[:100]))
 x_input = 10
-y_input = math.ceil(max(file_data) - min(file_data))
+y_input = math.ceil((max(file_data) - min(file_data))*10)
+# print(max(file_data), min(file_data), y_input, x_input)
 t_data = len(file_data) - x_input
 
 signal = [[] for i in range(x_input*y_input)]    # setting different spike times for each cell in the population requires an array of array
 
 for t in range(t_data):
     for x in range(x_input):
-        y_data = math.floor(file_data[t + x] - min(file_data))
-        signal[(y_data-1)*x_input + x].append(t)
+        y_data = math.floor(10*(file_data[t + x] - min(file_data)))
+        # print(y_data)
+        for overlap in [-2,-1,0,1,2] : # Noverlap = 5 
+            try : 
+                signal[(y_data-1+overlap)*x_input + x].append(t)
+            except IndexError: 
+                pass
 signal = [Sequence(signal_1_neuron) for signal_1_neuron in signal]  # more specifically array of inner arrays wrapped in Sequence class (to avoid ambiguities)
 
 
@@ -83,6 +89,7 @@ Input =  sim.Population(
     label="Input"
 )
 Input.record("spikes")
+# print(Input.size)
 
 # LIF neurons for attention, intermediate and output
 
@@ -127,6 +134,8 @@ Conn_input_inter = sim.Projection(
     receptor_type="excitatory",
     label="Connection input to intermediate"
 )
+# print(Input.size*Intermediate.size, len(list(Conn_input_inter.connections)))
+# print(list(Conn_input_inter.connections)[0].source,list(Conn_input_inter.connections)[0].target)
 
 # connection WTA inter
 
@@ -252,6 +261,7 @@ class STDP_Input_Inter(object):
         self.w = self.projection.get("weight", format="array")
         self.source = Input
         self.target = Intermediate
+        # self.l = len(list(self.projection.connections))
 
         # STDP parameters
         self.tau_stdp_minus = 0
@@ -278,6 +288,9 @@ class STDP_Input_Inter(object):
         except IndexError : 
             pass
         self.projection.set(weight=self.w)
+        # for idx in range(self.l):
+        #     print(idx)
+        #     list(self.projection.connections)[idx].weight=self.w.flat[idx]   
         print("input inter stop", datetime.datetime.now())
         return t + self.interval
 
