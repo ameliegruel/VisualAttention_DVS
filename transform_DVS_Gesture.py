@@ -39,6 +39,7 @@ for i in range(N):
         
 gesture_data.close()
 os.system('csvtool transpose -t ";" -u ";" gesture_data.csv > T_gesture_data.csv')
+os.system('mv T_gesture_data.csv gesture_data.csv')
 
 print(np.sum([len(st) for st in spikes]))
 idx = ev[0, 0, index_x]*(gesture.sensor_size[0]) + ev[0, 0, index_y] # first spike
