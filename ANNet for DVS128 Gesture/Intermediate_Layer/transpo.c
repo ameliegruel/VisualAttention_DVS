@@ -1,7 +1,8 @@
-const int nTranspoField = 10;
-const	char *transpoField[10] = {
+const int nTranspoField = 11;
+const	char *transpoField[11] = {
                
-          "centers",
+          "DVS_x",
+		  "DVS_y",
           "DVm",
           "twindow",
           "stepSize",
@@ -16,8 +17,8 @@ const	char *transpoField[10] = {
 
 typedef struct tag_transpo {
 
-double* centers;
-unsigned short nCenters;
+unsigned short DVS_x;
+unsigned short DVS_y;
 double DVm;
 unsigned short twindow;
 unsigned short stepSize;
@@ -46,39 +47,41 @@ TRANSPO matlabToC_transpo_byIdx(const mxArray *matlabTranspo,int idx) {
 
 		switch(i) {
 			case 0:
-				transpo.centers  = mxGetPr(field);
-                transpo.nCenters  = mxGetN(field);
-				break;
+				transpo.DVS_x  = mxGetScalar(field);
+            	break;
 			case 1:
+				transpo.DVS_y = mxGetScalar(field);
+				break;
+			case 2:
 				transpo.DVm = mxGetScalar(field);
 				break;
-            case 2:
+            case 3:
 				transpo.twindow = mxGetScalar(field);
 				break;
-            case 3:
+            case 4:
 				transpo.stepSize = mxGetScalar(field);
 				break;
-            case 4:
-				transpo.currentSpikes = (bool*)mxGetPr(field);
-                transpo.nAfferents = mxGetNumberOfElements(field);
-				break;
             case 5:
-				transpo.intermediateSpikes =(bool*) mxGetPr(field);
+				transpo.currentSpikes = (bool*)mxGetPr(field);
 				break;
             case 6:
-				transpo.pRel = mxGetPr(field);
+				transpo.intermediateSpikes =(bool*) mxGetPr(field);
 				break;
             case 7:
-				transpo.Fd = mxGetPr(field);
+				transpo.pRel = mxGetPr(field);
 				break;
             case 8:
-				transpo.pRelLastComputation = (int*)mxGetPr(field);
+				transpo.Fd = mxGetPr(field);
 				break;
             case 9:
+				transpo.pRelLastComputation = (int*)mxGetPr(field);
+				break;
+            case 10:
 				transpo.lastPreSpike =(int*) mxGetPr(field);
 				break;
 		} 
 	}
+	transpo.nAfferents = transpo.DVS_x*transpo.DVS_y*transpo.twindow;
 	return transpo;
 }
 

@@ -13,23 +13,25 @@ for i=1:signal.nSignals
     SPIKETRANSPOSITION(i).twindow=uint16(SIMU.TR_winSize);
     SPIKETRANSPOSITION(i).stepSize=uint16(SIMU.TR_stepSize);
     
-    minVal=min(min(signal.data));
-    maxVal=max(max(signal.data));
+    %minVal=min(min(signal.data));
+    %maxVal=max(max(signal.data));
     
     DVm=SPIKETRANSPOSITION(i).DVm;
     DVi=DVm*2/SIMU.TR_overlap;
     
     
-    SPIKETRANSPOSITION(i).centers=(minVal-DVm):DVi:(maxVal+DVm);
-    SPIKETRANSPOSITION(i).nAff=SPIKETRANSPOSITION(i).twindow*length(SPIKETRANSPOSITION(i).centers);
-    SPIKETRANSPOSITION(i).currentSpikes=logical(zeros(length(SPIKETRANSPOSITION(i).centers),SPIKETRANSPOSITION(i).twindow));
-    SPIKETRANSPOSITION(i).intermediateSpikes=logical(zeros(length(SPIKETRANSPOSITION(i).centers),SIMU.TR_stepSize*SPIKETRANSPOSITION(i).twindow));
+    %SPIKETRANSPOSITION(i).centers=(minVal-DVm):DVi:(maxVal+DVm);
+    SPIKETRANSPOSITION(i).DVS_x=128;
+    SPIKETRANSPOSITION(i).DVS_y=128;
+    SPIKETRANSPOSITION(i).nAff=SPIKETRANSPOSITION(i).twindow*SPIKETRANSPOSITION(i).DVS_x*SPIKETRANSPOSITION(i).DVS_y;  % nombre de neurones dans input
+    SPIKETRANSPOSITION(i).currentSpikes=logical(zeros(SPIKETRANSPOSITION(i).DVS_x, SPIKETRANSPOSITION(i).DVS_y, SPIKETRANSPOSITION(i).twindow));  % 3D array of zeros, of size (x=128,y=128,z=10) and converted to array of logical values with logical()
+    SPIKETRANSPOSITION(i).intermediateSpikes=logical(zeros(SPIKETRANSPOSITION(i).DVS_x, SPIKETRANSPOSITION(i).DVS_y,SIMU.TR_stepSize*SPIKETRANSPOSITION(i).twindow));  % 3D array of zeros of size (x=128,y=128,z=4*10), and converted to array of logical values
     
-    SPIKETRANSPOSITION(i).Prel=ones(length(SPIKETRANSPOSITION(i).centers),SPIKETRANSPOSITION(i).twindow);
-    SPIKETRANSPOSITION(i).Fd=zeros(length(SPIKETRANSPOSITION(i).centers),SPIKETRANSPOSITION(i).twindow);
-    SPIKETRANSPOSITION(i).PrelLastComputation=int32(zeros(length(SPIKETRANSPOSITION(i).centers),SPIKETRANSPOSITION(i).twindow));
-    SPIKETRANSPOSITION(i).lastPreSpike=int32(-1*ones(length(SPIKETRANSPOSITION(i).centers),SPIKETRANSPOSITION(i).twindow));
-    
+    SPIKETRANSPOSITION(i).Prel=zeros(SPIKETRANSPOSITION(i).DVS_x, SPIKETRANSPOSITION(i).DVS_y, SPIKETRANSPOSITION(i).twindow); % Prel ?? - 2D array of zeros of size (y=84,x=10)
+    SPIKETRANSPOSITION(i).Fd=zeros(SPIKETRANSPOSITION(i).DVS_x, SPIKETRANSPOSITION(i).DVS_y, SPIKETRANSPOSITION(i).twindow);  % short term plasticity depression factor -- 2D array of zeros, of size (y=84,x=10)
+    SPIKETRANSPOSITION(i).PrelLastComputation=int32(zeros(SPIKETRANSPOSITION(i).DVS_x, SPIKETRANSPOSITION(i).DVS_y, SPIKETRANSPOSITION(i).twindow)); %  
+    SPIKETRANSPOSITION(i).lastPreSpike=int32(-1*ones(SPIKETRANSPOSITION(i).DVS_x, SPIKETRANSPOSITION(i).DVS_y, SPIKETRANSPOSITION(i).twindow));      % 2D array of -1 of size (y=84,x=10)
+        
 end
 
 end

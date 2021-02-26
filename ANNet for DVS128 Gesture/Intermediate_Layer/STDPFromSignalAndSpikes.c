@@ -168,35 +168,83 @@ int i_round(double x) {
 	return (int) (x+.5);
 }
 
+
+int valueInArray(int val, double arr[], int arr_length) { // retourne 1 si l'arg 1 est présent dans l'array arg 2; sinon retourne 0
+    int i;
+    for (i=0; i<arr_length;i++) {
+        //printf("%d ",arr[i]);
+        if (arr[i]==val) {
+            //printf("\n");
+            return 1;
+        }
+    }
+    //printf("\n");
+    return 0;
+}
+
+double * roundArray(double arr[], int size_arr) {
+    double * output=malloc(size_arr*sizeof(double));
+    for (int i=0; i<size_arr;i++){
+        //printf("Value before rounding : %f\n", arr[i]);
+        output[i] = round(arr[i]);
+        //printf("Value after rounding : %f\n", output[i]);
+    }
+    return output;
+}
+
+// ICI TRAITEMENT DU SIGNAL EN ENTREE 
 void updateAfferentSpikes(TRANSPO* transpo,SIGNAL* signal,int idx,int t)
 {
-    double value;
-    int i,j;
+    double * values;
+    int x,y,z,i;
     
-    value=signal->data[signal->nSignals*(t-signal->startStep)+idx];
-
-    for(i=transpo[idx].nAfferents*transpo[idx].stepSize-1;i>=transpo[idx].nCenters;i--)
+    for (z=transpo[idx].twindow*transpo[idx].stepSize-1;z>=transpo[idx].stepSize; z--)
     {
-        transpo[idx].intermediateSpikes[i]=transpo[idx].intermediateSpikes[i-transpo[idx].nCenters];
-    }
-    
-    for (i=0;i<transpo[idx].nCenters;i++)
-    {
-        if(value>transpo[idx].centers[i]-transpo[idx].DVm && value<=transpo[idx].centers[i]+transpo[idx].DVm)
+        for (y=transpo[idx].DVS_y-1; y>=0; y--)     // pour chaque i allant de 128*4-1 à 128
         {
-            transpo[idx].intermediateSpikes[i]=1;
-        }
-        else
-        {
-            transpo[idx].intermediateSpikes[i]=0;
+            for(x=transpo[idx].DVS_x-1;x>=0;x--)    
+            {
+                // printf("Test 2\n");
+                double temp = transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x+(z-transpo[idx].stepSize)*transpo[idx].DVS_y*transpo[idx].DVS_x];
+                transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x+z*transpo[idx].DVS_y*transpo[idx].DVS_x]=temp;
+                // intermediateSPikes updated : chaque spike inter est décalé de -1 indices en arrière (z), laisse de la place pour 128*128 new values à gauche
+                // printf("Test 3\n");
+            }
         }
     }
+    // printf("Test 4\n");
     
-    for(i=0;i<transpo[idx].twindow;i++)
+    for (x=0;x<transpo[idx].DVS_x;x++) // pour i allant de 0 à 128 (x input)
     {
-        for (j=0;j<transpo[idx].nCenters;j++)
+        for (y=0; y<transpo[idx].DVS_y; y++) 
         {
-			transpo[idx].currentSpikes[i*transpo[idx].nCenters + j] = transpo[idx].intermediateSpikes[i*transpo[idx].nCenters*transpo[idx].stepSize + j];
+            // printf("Test 5\n");
+            int pixel_number = y*transpo[idx].DVS_x + x ;
+            values = roundArray(signal->data+( pixel_number*sizeof(double) ), signal->col_size);
+            
+            if (valueInArray(t,values,signal->line_size)==1)
+            {
+                transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x]=1;
+            }
+            else
+            {
+                transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x]=0;
+                // sinon le spike correspondant au ie neurone y est mis à 0
+            }
+            
+            free(values);
+        }
+    }
+    
+    for(z=0;z<transpo[idx].twindow;z++) // pour z allant de 0 à 4*10 (z input)
+    {
+        for (x=0;x<transpo[idx].DVS_x;x++)  // pour x allant de 0 à 128
+        {
+			for (y=0;y<transpo[idx].DVS_y;y++) 
+            {
+                transpo[idx].currentSpikes[x+y*transpo[idx].DVS_x+z*transpo[idx].DVS_y*transpo[idx].DVS_x] = transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x+z*transpo->stepSize*transpo[idx].DVS_y*transpo[idx].DVS_x];
+                // le currentSpike correspondant au neurone de coordonnée (x=i, y=j) vaut la valeur de l'intermediate spike correspondant au neurone (x=i,y=j) de la couche d'input
+            }
         }
     }
 }
@@ -316,6 +364,8 @@ void applyInhibition(NEURON *postNeuron,int preNeuronIdx, int time, PARAM *param
     updatePotential(postNeuron,time,-postNeuron->iWeight[preNeuronIdx],true,param);
 }
 
+
+// 0-neuron, 1-struct(signal), 2-INPUTSPIKES, 3-SPIKETRANSPOSITION, 4-PARAM_L1, 5-start, 6-stop
 void
 mexFunction(	int nlhs, mxArray *plhs[],
 				int nrhs, const mxArray *prhs[] )
@@ -370,10 +420,10 @@ mexFunction(	int nlhs, mxArray *plhs[],
         }
         
         //check time range
-        if(start<signal.startStep||stop>signal.startStep+signal.nData)
-        {
-            mexErrMsgIdAndTxt("timeRangeError","outside data time range,%d-%d,%d-%d\n",start,stop,signal.startStep,signal.startStep+signal.nData);
-        }
+        // if(start<signal.startStep||stop>signal.startStep+signal.nData)
+        // {
+        //     mexErrMsgIdAndTxt("timeRangeError","outside data time range,%d-%d,%d-%d\n",start,stop,signal.startStep,signal.startStep+signal.nData);
+        // }
         
         // main loop (time)
         for (t=start;t<stop;t++)
@@ -381,6 +431,7 @@ mexFunction(	int nlhs, mxArray *plhs[],
             int aff=0;
             int sig=0;
             
+            // printf("test 1\n");
             //presynaptic spikes from spiketrain
             while(s<inputSpikes.nSpikes&&inputSpikes.timeStamps[s]<t)
             {
@@ -392,29 +443,26 @@ mexFunction(	int nlhs, mxArray *plhs[],
             }
             
            //presynaptic spikes loop (integrate)
-            for (sig=0;sig<signal.nSignals;sig++)
-            {
-                updateAfferentSpikes(transpo,&signal, sig,t);
+            updateAfferentSpikes(transpo,&signal, sig,t);
                 
-                for(aff=0;aff<transpo[sig].nAfferents;aff++)
-                {/*presynaptic spikes*/
-                    int dt;
-                    if(transpo[sig].currentSpikes[aff]==1)
+            for(aff=0;aff<transpo[sig].nAfferents;aff++)
+            {/*presynaptic spikes*/
+                int dt;
+                if(transpo[sig].currentSpikes[aff]==1)
+                {
+                    
+                    transpo[sig].lastPreSpike[aff]=t;
+                    
+                    /* integrate this spike */
+                    for(i=0; i<nNeuron; i++)
                     {
                         
-                        transpo[sig].lastPreSpike[aff]=t;
+                        integrate(&neuron[i],t,sig,aff,&param,transpo);
                         
-                        /* integrate this spike */
-                        for(i=0; i<nNeuron; i++)
-                        {
-                            
-                            integrate(&neuron[i],t,sig,aff,&param,transpo);
-                            
-                        }
                     }
                 }
             }
-
+            
             //postsynaptic spikes loop
             nextFiring = -1;
             for(i=0; i<nNeuron; i++)
@@ -504,6 +552,8 @@ mexFunction(	int nlhs, mxArray *plhs[],
                 potIdx++;
                 nextPottime=nextPottime+param.PotHistStep;
             }
+
+            printf("Simulation done for t=%d\n", t);
         }
         
         for(i=0; i<nNeuron; i++)
