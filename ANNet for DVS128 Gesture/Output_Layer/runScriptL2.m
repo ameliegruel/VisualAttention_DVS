@@ -1,5 +1,5 @@
 %file names
-inputFile='testData.mat';
+inputFile='gesture_data.mat';
 inputFolder='../data/';
 
 AN_saveFolder='../Attention_Neuron/';
@@ -13,6 +13,14 @@ L2_simu_name='L2test';
 
 %load files
 load([inputFolder inputFile]);
+format long g;
+signal.data = gesturedata;
+signal.nSignals = 1;
+signal.dt=1.25e-5;
+signal.start=0;
+signal.line_size=size(signal.data,2);
+signal.col_size=size(signal.data,1);
+signal.stop = round(max(max(signal.data)));
 
 ANfile=[ AN_simu_name '_on_' inputFile];
 L1file=[ L1_simu_name '_on_' inputFile];
@@ -30,8 +38,9 @@ DN_SPIKES = prepareDNSpikes( spikeTrainAN,1/signal.dt);
 neuron2 = createNewNeuronLayer2(SIMU,INPUT_SPIKES);
 
 %run simulation
-start=signal.start/signal.dt;
-stop=start+size(signal.data,2);
+%start=signal.start/signal.dt;
+start=signal.start;
+stop=start+stop;
 tic
 [neuron2,INPUT_SPIKES]=STDPFromSpikes(neuron2,INPUT_SPIKES,DN_SPIKES,PARAM_L2,start,stop);
 toc

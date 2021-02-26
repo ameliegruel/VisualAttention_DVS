@@ -345,26 +345,28 @@ mexFunction(	int nlhs, mxArray *plhs[],
         int potIdx=0;
         double nextPottime=0;
        
-        mexPrintf("start\n");
+        mexPrintf("Start simulation\n");
         // affects output 
         plhs[0] = output;
         plhs[1] = outputInSpikes;
    
 
-        while (s<inputSpikes.nSpikes&&inputSpikes.timeStamps[s]<start)
-        {
-            s++;
-        }
+        // while (s<inputSpikes.nSpikes&&inputSpikes.timeStamps[s]<start)
+        // {
+        //     s++;
+        // }
         
-        while (dns<dnSpikes.nSpikes&&dnSpikes.timeStamps[dns]<start)
-        {
-            dns++;
-        }
+        // while (dns<dnSpikes.nSpikes&&dnSpikes.timeStamps[dns]<start)
+        // {
+        //     dns++;
+        // }
         
         
         for(t=start;t<stop;t++)
         { // main loop 
             
+            printf("T=%f\n",t);
+
             bool DNCancel=false;
             //presynaptic spikes from DN spiketrain
             while(dns<dnSpikes.nSpikes&&dnSpikes.timeStamps[dns]<=t)
@@ -505,6 +507,7 @@ mexFunction(	int nlhs, mxArray *plhs[],
                 wIdx++;
                 nextWtime=nextWtime+param.WHistStep;
             }
+            printf("Simulation done for t=%f\n", t);
 
         } // main loop 
         

@@ -19,7 +19,8 @@ spikes.timeStamps=times;
 spikes.neuronTags=spikes.neuronTags(idx);
 
 spikes.timeStamps=spikes.timeStamps+1;
-spikes.timeStamps=double(spikes.timeStamps)*simuStep;
+%spikes.timeStamps=double(spikes.timeStamps)*simuStep;
+spikes.timeStamps=double(spikes.timeStamps);
 
 end
 
