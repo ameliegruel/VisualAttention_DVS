@@ -121,22 +121,22 @@ int i_round(double x) {   // retourne la valeur arrondie supérieure de la varia
 int valueInArray(int val, double arr[], int arr_length) { // retourne 1 si l'arg 1 est présent dans l'array arg 2; sinon retourne 0
     int i;
     for (i=0; i<arr_length;i++) {
-        printf("%d ",arr[i]);
+        //printf("%d ",arr[i]);
         if (arr[i]==val) {
-            printf("\n");
+            //printf("\n");
             return 1;
         }
     }
-    printf("\n");
+    //printf("\n");
     return 0;
 }
 
 double * roundArray(double arr[], int size_arr) {
     double * output=malloc(size_arr*sizeof(double));
     for (int i=0; i<size_arr;i++){
-        printf("Value before rounding : %f\n", arr[i]);
+        //printf("Value before rounding : %f\n", arr[i]);
         output[i] = round(arr[i]);
-        printf("Value after rounding : %f\n", output[i]);
+        //printf("Value after rounding : %f\n", output[i]);
     }
     return output;
 }
@@ -153,28 +153,30 @@ void updateAfferentSpikes(TRANSPO* transpo,SIGNAL* signal,int idx,int t)  // app
     // value contient la valeur de signal du temps correspondant (t actuel - début du signal)
     // idx vaut 1 (nombre de signaux)
     
-    for(x=transpo[idx].DVS_x-1;x>=0;x--)    // pour chaque i allant de 128*4-1 à 128
+    for (z=transpo[idx].twindow*transpo[idx].stepSize-1;z>=transpo[idx].stepSize; z--)
     {
-        for (y=transpo[idx].DVS_y-1; y>=0; y--) 
+        for (y=transpo[idx].DVS_y-1; y>=0; y--)     // pour chaque i allant de 128*4-1 à 128
         {
-            for (z=transpo[idx].twindow*transpo[idx].stepSize-1;z>=transpo[idx].twindow; z--){
-                printf("Boucle à la con : x = %d, y = %d, z=%d ", x, y, z);
-                double temp = transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x+(z-1)*transpo[idx].DVS_y*transpo[idx].DVS_x];
-                printf("temp: %f\n", temp);
+            for(x=transpo[idx].DVS_x-1;x>=0;x--)    
+            {
+                //printf("Boucle à la con : x = %d, y = %d, z=%d ", x, y, z);
+                double temp = transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x+(z-transpo[idx].stepSize)*transpo[idx].DVS_y*transpo[idx].DVS_x];
+                //printf("temp: %f\n", temp);
                 transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x+z*transpo[idx].DVS_y*transpo[idx].DVS_x]=temp;
                 // intermediateSPikes updated : chaque spike inter est décalé de -1 indices en arrière (z), laisse de la place pour 128*128 new values à gauche
             }
         }
     }
-    printf("fin boucle à la con\n");
+    //printf("fin boucle à la con\n");
     
     
     for (x=0;x<transpo[idx].DVS_x;x++) // pour i allant de 0 à 128 (x input)
     {
         for (y=0; y<transpo[idx].DVS_y; y++) 
         {
-            values = roundArray(signal->data+((y-1)*transpo[idx].DVS_y + x)*sizeof(double), signal->col_size);
-            printf("Roundarray called for x=%d and y=%d\n", x, y);
+            int pixel_number = y*transpo[idx].DVS_x + x ;
+            values = roundArray(signal->data+( pixel_number*sizeof(double) ), signal->col_size);
+            //printf("Roundarray called for x=%d and y=%d\n", x, y);
             
             if (valueInArray(t,values,signal->line_size)==1)
             // if(valueInArray(round(t*signal->dt),values)==1)  
@@ -182,13 +184,13 @@ void updateAfferentSpikes(TRANSPO* transpo,SIGNAL* signal,int idx,int t)  // app
             {
                 transpo[idx].intermediateSpikes[x+y*transpo[idx].DVS_x]=1;
                 // le spike correspondant au ie neurone y (en début de interSpikes donc t le plus récent) est mis à 1
-                printf("Time : %d\n",t);
-                printf("Pixel x=%d et y=%d\n",x,y);
-                printf("Values : ");
-                for (i=0; i<signal->line_size;i++) {
-                    printf("%f ", values[i]);
-                }
-                printf("\n\n");
+                //printf("Time : %d\n",t);
+                //  printf("Pixel x=%d et y=%d\n",x,y);
+                //printf("Values : ");
+                //for (i=0; i<signal->line_size;i++) {
+                //    printf("%f ", values[i]);
+                //}
+                //printf("\n\n");
             }
             else
             {
@@ -284,8 +286,6 @@ mexFunction(	int nlhs, mxArray *plhs[],     // nlhs : nombre d'arguments en outp
         SIGNAL signal = matlabToC_signal(prhs[1]); /* signal */
         // crée un objet signal compréhensible en C à partir de l'objet signal Matlab
         
-        printf("blablabla %f\n",signal.data[12+2*16384]);
-        
         TRANSPO* transpo=matlabToC_transpos(outputTranspo); /* transposition : modifies the duplicata of Matlab SPIKETRANSPO into C object, with no modification of content */
         PARAM param = matlabToC_param(prhs[3]); /* param : parameters of Attention neuron from Matlab to C */
         
@@ -293,10 +293,9 @@ mexFunction(	int nlhs, mxArray *plhs[],     // nlhs : nombre d'arguments en outp
         unsigned short i;
         unsigned short nTranspos=mxGetN(prhs[2]);
         int start = (int)mxGetScalar(prhs[4]);
-        //int stop = (int)mxGetScalar(prhs[5]);
-        int stop = 2;
-        printf("%d\n", stop);
-
+        int stop = (int)mxGetScalar(prhs[5]);
+        //int stop = 50;
+        
         int potIdx=0;
         int nextPottime=0;
         
@@ -319,18 +318,18 @@ mexFunction(	int nlhs, mxArray *plhs[],     // nlhs : nombre d'arguments en outp
         {
             int aff=0;
             int sig=0;
-            printf("bla\n");
+            //printf("bla\n");
             updateAfferentSpikes(transpo,&signal, sig,t); 
             // update les valeurs de spikes entrant selon la valeur donnée en entrée par le signal
             // avec sig le nombre de signal (1) et t le temps
-            printf("blo\n");
+            //printf("blo\n");
             
             for(aff=0;aff<transpo[sig].nAfferents;aff++)  // pour chaque neurone de la couche d'entrée
                 {/*presynaptic spikes*/
                 int dt;
                 if(transpo[sig].currentSpikes[aff]==1)  // si ce neurone est actif à l'instant t => calcul de la STP => POURQUOI ??
                 {
-                    printf("YESSSSSSSSSSSSSSSSSSSSSSSSSSSSss\n");
+                    //printf("YESSSSSSSSSSSSSSSSSSSSSSSSSSSSss\n");
                     /*Prel update 1st step*/
                     dt=t - transpo[sig].pRelLastComputation[aff];  
                     if(dt<param.std_t*20)
@@ -374,8 +373,9 @@ mexFunction(	int nlhs, mxArray *plhs[],     // nlhs : nombre d'arguments en outp
                 potIdx++;
                 nextPottime=nextPottime+param.PotHistStep;
             }
+            
+            printf("Simulation done for t=%d\n", t);
         }
-        
         
         mxFree(neuron);
         mexPrintf("done\n");

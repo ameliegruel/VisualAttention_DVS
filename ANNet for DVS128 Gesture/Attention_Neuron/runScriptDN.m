@@ -9,7 +9,6 @@ AN_saveFolder='';
 load([inputFolder inputFile]);
 format long g;
 signal.data = gesturedata; 
-%signal.data_length =
 signal.nSignals=1;
 signal.dt=1.25e-5;
 signal.start=0;
@@ -24,8 +23,9 @@ SPIKETRANSPOSITION=prepareSpikeTransposition(SIMU,signal);
 neuron = createNewDNNeuron(SIMU,size(signal.data,2));
 
 %run simulation
-start=signal.start/signal.dt;
+%start=signal.start/signal.dt;
 %stop=start+signal.stop/signal.dt;
+start=signal.start;
 stop = start+signal.stop;
 tic
 [neuron]=DNFromSignal(neuron,struct(signal),SPIKETRANSPOSITION,PARAM_DN,start,stop);
