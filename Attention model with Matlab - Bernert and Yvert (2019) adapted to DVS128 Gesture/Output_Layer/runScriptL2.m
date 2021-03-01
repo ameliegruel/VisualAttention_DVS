@@ -33,14 +33,16 @@ load([AN_saveFolder ANfile],'spikeTrainAN');
 %prepare parameters
 simuparameter;
 PARAM_L2=createParamLayer2(SIMU);
-INPUT_SPIKES = prepareInputSpikes( spikeTrainL1,1/signal.dt,SIMU.L2_delay,SIMU.L2_nbDelays);
-DN_SPIKES = prepareDNSpikes( spikeTrainAN,1/signal.dt);
+%INPUT_SPIKES = prepareInputSpikes( spikeTrainL1,1/signal.dt,SIMU.L2_delay,SIMU.L2_nbDelays);
+INPUT_SPIKES = prepareInputSpikes( spikeTrainL1, 1, SIMU.L2_delay, SIMU.L2_nbDelays);
+%DN_SPIKES = prepareDNSpikes( spikeTrainAN,1/signal.dt);
+DN_SPIKES = prepareDNSpikes( spikeTrainAN, 1);
 neuron2 = createNewNeuronLayer2(SIMU,INPUT_SPIKES);
 
 %run simulation
 %start=signal.start/signal.dt;
 start=signal.start;
-stop=start+stop;
+stop=start+signal.stop;
 tic
 [neuron2,INPUT_SPIKES]=STDPFromSpikes(neuron2,INPUT_SPIKES,DN_SPIKES,PARAM_L2,start,stop);
 toc

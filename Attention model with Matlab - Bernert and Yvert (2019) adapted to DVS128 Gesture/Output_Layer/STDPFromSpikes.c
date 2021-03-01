@@ -149,6 +149,7 @@ double applyBoundaries(double x, double downLim,double upLim)
 
 void updatePotential(NEURON *neuron, double time, double value ,bool absolute,PARAM *param)
 {
+    // printf("updatePotential()\n");
     double dt=time-(*neuron->lastComputationTime);
         
     /*update potential*/
@@ -166,18 +167,20 @@ void updatePotential(NEURON *neuron, double time, double value ,bool absolute,PA
     /*update next firing time*/
     if(mxIsInf(*neuron->threshold)||*(neuron->lastComputedPotential)<*neuron->threshold)
     {
+        //printf("no firing scheduled\n");
         *(neuron->nextFiring)=-1;//no firing scheduled, no additional computation needed
     }
     else
     {
+        printf("firing : ");
         double nextft=time;
         if(*neuron->lastPostSpike>=0&&*neuron->lastPostSpike+ param->refractoryPeriod>nextft)
         {
-             nextft=*neuron->lastPostSpike+ param->refractoryPeriod;
+            nextft=*neuron->lastPostSpike+ param->refractoryPeriod;
         }
         if(*neuron->lastInhibition>=0&&*neuron->lastInhibition+ param->inhibitoryPeriod>time)
         {
-             nextft=*neuron->lastInhibition+ param->inhibitoryPeriod;
+            nextft=*neuron->lastInhibition+ param->inhibitoryPeriod;
         }
         
         if(nextft>time)
@@ -189,15 +192,18 @@ void updatePotential(NEURON *neuron, double time, double value ,bool absolute,PA
             }
             if(pot>=*neuron->threshold)
             {
+                printf("next spike at the end of refractory period\n");
                 *(neuron->nextFiring)=nextft;//next spike at the end of refractory period
             }
             else
             {
+                printf("no next firing\n");
                 *(neuron->nextFiring) = -1;
             }
         }
         else
         {
+            printf("next spike right now\n");
             *(neuron->nextFiring)=time;
         }
     }
@@ -318,6 +324,8 @@ void applyInhibition(NEURON *postNeuron,INPUTSPIKES* inputSpikes,int preNeuronId
     *postNeuron->lastInhibition=time;
 }
 
+
+// 0-neuron2, 1-INPUT_SPIKES, 2-DN_SPIKES, 3-PARAM_L2, 4-start, 5-stop
 void
 mexFunction(	int nlhs, mxArray *plhs[],
 				int nrhs, const mxArray *prhs[] )
@@ -326,10 +334,10 @@ mexFunction(	int nlhs, mxArray *plhs[],
     {
         /* variables */
         mxArray *output = mxDuplicateArray(prhs[0]); 
-        mxArray *outputInSpikes = mxDuplicateArray(prhs[1]); 
+        mxArray *outputInSpikes = mxDuplicateArray(prhs[1]); // spikes from Intermediate
         NEURONS neuron = matlabToC_neurons(output);	
         INPUTSPIKES inputSpikes=matlabToC_inputSpikes(outputInSpikes);
-        INPUTSPIKES dnSpikes=matlabToC_inputSpikes(prhs[2]);
+        INPUTSPIKES dnSpikes=matlabToC_inputSpikes(prhs[2]);  // spikes from Attention
         PARAM param = matlabToC_param(prhs[3]); 
         double start = mxGetScalar(prhs[4]);
         double stop = mxGetScalar(prhs[5]);
@@ -351,21 +359,25 @@ mexFunction(	int nlhs, mxArray *plhs[],
         plhs[1] = outputInSpikes;
    
 
-        // while (s<inputSpikes.nSpikes&&inputSpikes.timeStamps[s]<start)
-        // {
-        //     s++;
-        // }
+        printf("input nSpikes = %d   &   DN nSpikes = %d\n", inputSpikes.nSpikes, dnSpikes.nSpikes);
+        printf("input timeStamps[s]=%f    &    DN timeStamps[dns] = %f\n", inputSpikes.timeStamps[s], dnSpikes.timeStamps[dns]);
+        printf("start : %f", start);
+        // on n'entre pas dans les 2 boucles while
+        while (s<inputSpikes.nSpikes&&inputSpikes.timeStamps[s]<start)
+        {
+            printf("Test 1: s=%d\n",s);
+            s++;
+        }
         
-        // while (dns<dnSpikes.nSpikes&&dnSpikes.timeStamps[dns]<start)
-        // {
-        //     dns++;
-        // }
+        while (dns<dnSpikes.nSpikes&&dnSpikes.timeStamps[dns]<start)
+        {
+            printf("Test 2: dns=%d\n",dns);
+            dns++;
+        }
         
         
         for(t=start;t<stop;t++)
         { // main loop 
-            
-            printf("T=%f\n",t);
 
             bool DNCancel=false;
             //presynaptic spikes from DN spiketrain
@@ -397,25 +409,29 @@ mexFunction(	int nlhs, mxArray *plhs[],
             {
                 if(*(neuron[i].nextFiring)!=-1&&*(neuron[i].nextFiring)<=t)
                 {
+                    printf("nextOneToFire : 2 ");
                     if(!param.wta_max)
                     {
+                        printf("3a ");
                         nextOneToFire=i;
                         break;
                     }
                     else
                     {
+                        printf("3b ");
                         updatePotential(&neuron[i],t,0,false,&param);
                         if(nextOneToFire==-1||*neuron[nextOneToFire].lastComputedPotential/(*neuron[nextOneToFire].threshold)<*neuron[i].lastComputedPotential/(*neuron[i].threshold))
                         {
                             nextOneToFire=i;
                         }
                     }
+                    printf("\n");
                 }
-                    
             }
 
             if(nextOneToFire!=-1)
             {
+                printf("Test fire");
                 // the winner fires
                 fire(&neuron[nextOneToFire],&inputSpikes,t,&param);
                 
@@ -507,7 +523,7 @@ mexFunction(	int nlhs, mxArray *plhs[],
                 wIdx++;
                 nextWtime=nextWtime+param.WHistStep;
             }
-            printf("Simulation done for t=%f\n", t);
+            // printf("Simulation done for t=%f\n", t);
 
         } // main loop 
         

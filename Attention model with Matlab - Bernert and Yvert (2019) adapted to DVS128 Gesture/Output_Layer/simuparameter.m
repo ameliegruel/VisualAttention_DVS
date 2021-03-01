@@ -22,7 +22,8 @@ SIMU.L2_nbDelays=floor(2.5e-3/step);
 SIMU.L2_delay=step;
 
 %neuron param
-SIMU.L2_tm = 3e-3/signal.dt;
+%SIMU.L2_tm = 3e-3/signal.dt;
+SIMU.L2_tm = 3e-3;
 SIMU.L2_WImin=0;
 SIMU.L2_WImax=1;
 SIMU.L2_WNegImin=0;
