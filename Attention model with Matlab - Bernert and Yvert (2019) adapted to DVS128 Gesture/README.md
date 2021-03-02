@@ -12,17 +12,20 @@ The data is imported from the Python library `tonic` and translated in a CSV fil
    The arguments cat1, cat2, etc specify the categories to import. 
    If a category is specified more than one time, tonic will import different samples from this category.
 2) Launch Matlab, then run successively the scripts : 
-   `Attention_Neuron/mexScript.m`
-   `Attention_Neuron/runScriptDN.m`
-   `Intermediate_Layer/mexScript.m`
-   `Intermediate_Layer/runScriptL1.m`
-   `Output_Layer/mexScript.m`
-   `Output_Layer/runScriptL2.m`
+   * `Attention_Neuron/mexScript.m`
+   * `Attention_Neuron/runScriptDN.m`
+   * `Intermediate_Layer/mexScript.m`
+   * `Intermediate_Layer/runScriptL1.m`
+   * `Output_Layer/mexScript.m`
+   * `Output_Layer/runScriptL2.m`
 3) To display the results, add the **drawingUtils** directory to the current path then run `plot_results.m`
 
 ### To run it manually over many simulations
 
-
+1) Modify the line 27 of `AutoAttentionModel.sh` : replace with the path to the Matlab directory on your machine
+2) Modify the line 8 of `AutoAttentionModel.sh` : currently the simulations runs 10 times, but you can adapt it to your needs
+3) Modify the line 23 of `AutoAttentionModel.sh` : currently 6 different samples are concatenated, with the 5 first samples from the same category. Adapt this to your needs. 
+4) Run `AutoAttentionModel.sh`
   
 ## Requirements
   
