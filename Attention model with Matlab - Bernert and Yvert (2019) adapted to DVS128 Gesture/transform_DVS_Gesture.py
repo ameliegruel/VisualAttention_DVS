@@ -3,7 +3,6 @@ import tonic
 import tonic.transforms as tr
 import numpy as np
 import csv
-from skimage.measure import block_reduce
 import sys
 
 if len(sys.argv) == 1:
