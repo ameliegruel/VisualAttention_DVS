@@ -20,7 +20,7 @@ The data is imported from the Python library `tonic` and translated in a CSV fil
    * `Output_Layer/runScriptL2.m`
 3) To display the results, add the **drawingUtils** directory to the current path then run `plot_results.m`
 
-### To run it manually over many simulations
+### To run it automatically
 
 1) Modify the line 27 of `AutoAttentionModel.sh` : replace with the path to the Matlab directory on your machine
 2) Modify the line 8 of `AutoAttentionModel.sh` : currently the simulations runs 10 times, but you can adapt it to your needs
