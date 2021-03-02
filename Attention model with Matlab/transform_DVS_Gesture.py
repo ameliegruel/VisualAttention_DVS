@@ -41,11 +41,11 @@ for sample in samples_list:
     index_y = gesture.ordering.find("y")
     index_t = gesture.ordering.find("t")
 
-    for pixel in range(int(N/4)): 
+    for pixel in range(int(N/4)):   # spatial reduction (each block of 4 pixels will be considered as one pixel)
         row = pixel // (gesture.sensor_size[0])
         col = pixel %  (gesture.sensor_size[1])
-        spike_idx = np.where((events[0, :, index_x]//2 == row) & (events[0, :, index_y]//2 == col))[0]
-        spike_times = [start_timestamps + int(round(e)) for e in list(events[0, spike_idx, index_t] * 1e-3)] # in milliseconds
+        spike_idx = np.where((events[0, :, index_x]//2 == row) & (events[0, :, index_y]//2 == col))[0]   # 
+        spike_times = [start_timestamps + int(round(e)) for e in list(events[0, spike_idx, index_t] * 1e-3)] # spatial reduction (each event is rounded to the millisecond)
         spikes[pixel] += spike_times
 
     # print(np.sum([len(st) for st in spikes]))
