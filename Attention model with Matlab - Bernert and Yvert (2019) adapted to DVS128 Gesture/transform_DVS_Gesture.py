@@ -13,13 +13,6 @@ dl = not os.path.isfile('data_gesture/gesture.zip')
 
 gesture = tonic.datasets.DVSGesture(save_to="./data_gesture", download=dl, train=True)
 loader = tonic.datasets.DataLoader(gesture, batch_size=1, shuffle=False)
-"""
-nb=0
-for ev,target in iter(loader):
-    nb+=1
-    print(target)
-print(nb)
-"""
 
 print("### Data loaded ###\n")
 N = np.prod(gesture.sensor_size)
@@ -34,7 +27,7 @@ event_by_sample = []
 for sample in sys.argv[1:]:
     print("// SAMPLE for category "+sample+" //")
     for ev,target in iter(loader):
-        if target.item() == int(sample) and ev.numpy().shape[1] not in event_by_sample: # we want right hand clockwise
+        if target.item() == int(sample) and ev.numpy().shape[1] not in event_by_sample: 
             break
 
     events = ev.numpy()
