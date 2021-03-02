@@ -7,5 +7,7 @@
 ## Original paper
 
 Marie Bernert and Blaise Yvert, An Attention-Based Spiking Neural Network for Unsupervised Spike-Sorting (2019)
+
 *International Journal of Neural Systems* | Vol. 29, No. 08, 1850059 | Research Article
-\url{https://doi.org/10.1142/S0129065718500594}
+
+https://doi.org/10.1142/S0129065718500594
