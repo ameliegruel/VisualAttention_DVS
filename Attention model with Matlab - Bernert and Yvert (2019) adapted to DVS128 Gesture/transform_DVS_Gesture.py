@@ -23,11 +23,12 @@ print()
 start_timestamps = 0
 spikes = [[] for pixel in range(int(N/4))]
 event_by_sample = []
+samples_list = [int(sample)+1 for sample in sys.argv[1:]]
 
-for sample in sys.argv[1:]:
-    print("// SAMPLE for category "+sample+" //")
+for sample in samples_list:
+    print("// SAMPLE for category "+str(sample)+" //")
     for ev,target in iter(loader):
-        if target.item() == int(sample) and ev.numpy().shape[1] not in event_by_sample: 
+        if target.item() == sample and ev.numpy().shape[1] not in event_by_sample: 
             break
 
     events = ev.numpy()
