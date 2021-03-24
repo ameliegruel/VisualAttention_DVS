@@ -1,0 +1,11 @@
+Simulation loop;Number of active output neurons;Activation rate of output layer;Specific activation rate;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;
+1;8;0.727;1.6364;25;2;25;0.025;60;25;240;11;
+2;8;0.727;2.0909;25;2;25;0.025;60;25;240;11;
+3;9;0.818;1.5455;25;2;25;0.025;60;25;240;11;
+4;9;0.818;1.0909;25;2;25;0.025;60;25;240;11;
+5;9;0.818;1.0909;25;2;25;0.025;60;25;240;11;
+6;11;1;2.4545;25;2;25;0.025;60;25;240;11;
+7;9;0.818;2.4545;25;2;25;0.025;60;25;240;11;
+8;11;1;1.7273;25;2;25;0.025;60;25;240;11;
+9;7;0.636;2.2727;25;2;25;0.025;60;25;240;11;
+10;9;0.818;1.6364;25;2;25;0.025;60;25;240;11;
