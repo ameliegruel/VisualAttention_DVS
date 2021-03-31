@@ -81,34 +81,37 @@ if args.loop == None :
         spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
 
 else : 
-    category = args.categories[0]
-    if args.same_samples :
-        for ev,target in iter(loader):
-            if target.item() == category-1:
-                break
-        
-        spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
-        t_max = start_timestamps
+    nb_sim = 0
+    for category in args.categories:
+            if args.same_samples :
+                for ev,target in iter(loader):
+                    if target.item() == category-1:
+                        break
+                
+                spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
+                t_max = start_timestamps
 
-        for l in range(args.loop[0]):
-            print("// SAMPLE "+str(l+1)+" for category "+str(category))
-            for pixel in range(int(N/4)):
-                spike_times = [start_timestamps + e for e in spikes[pixel] if e <=t_max] # spatial reduction (each event is rounded to the millisecond)
-                spikes[pixel] += spike_times
-            start_timestamps = max(sum(spikes,[]))
-            samples_time.append(start_timestamps)
-            print("")
+                for l in range(args.loop[0]):
+                    print("// SAMPLE "+str(nb_sim+1)+" for category "+str(category))
+                    nb_sim += 1
+                    for pixel in range(int(N/4)):
+                        spike_times = [start_timestamps + e for e in spikes[pixel] if e <=t_max] # spatial reduction (each event is rounded to the millisecond)
+                        spikes[pixel] += spike_times
+                    start_timestamps = max(sum(spikes,[]))
+                    samples_time.append(start_timestamps)
+                    print("")
 
 
-    elif args.different_samples :
-        for l in range(args.loop[0]):
-            print("// SAMPLE "+str(l+1)+" for category "+str(category))
-        
-            for ev,target in iter(loader):
-                if target.item() == category-1 and ev.numpy().shape[1] not in event_by_sample:
-                    event_by_sample.append(ev.numpy().shape[1])
-                    break
-            spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
+            elif args.different_samples :
+                for l in range(args.loop[0]):
+                    print("// SAMPLE "+str(nb_sim+1)+" for category "+str(category))
+                    nb_sim += 1
+                
+                    for ev,target in iter(loader):
+                        if target.item() == category-1 and ev.numpy().shape[1] not in event_by_sample:
+                            event_by_sample.append(ev.numpy().shape[1])
+                            break
+                    spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
 
 
 # writing data into csv
