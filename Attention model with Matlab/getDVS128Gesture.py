@@ -11,107 +11,91 @@ parser = argparse.ArgumentParser(description="Import samples from specific categ
 parser.add_argument("categories", metavar="C", type=int, nargs="+", help="Wanted category, defined by an integer between 1 and 11")
 parser.add_argument("--different_samples","-d", help="Get different samples for a specific category called many times (True by default)", action='store_true', default=True)
 parser.add_argument("--same_samples","-s", help="Get the same sample for a specific category called many times", action='store_true')
-parser.add_argument("--loop","-l", help="Create a csv with same category L times", nargs=1, metavar="L", type=int)
+parser.add_argument("--loop","-l", help="Create a csv with same category L times", nargs=1, metavar="L", type=int, default=[1])
 args = parser.parse_args()
 
 print(args)
 
 
 ## FUNCTIONS
-def getSpikes(ev, target, spikes, samples_time, start_timestamps):
+def getSpikes(category, sample, spikes, samples_time):
+    nom_file = "DVS128_data/Category"+str(category)+"_Sample"+str(sample)+".csv"
+    print(nom_file)
+    data_file = open(nom_file, "r")
+    pixel = 0
+    for line in data_file:
+        pixel_data = [samples_time[-1]+int(p) for p in line.split(";") if p not in ("","\n")]
+        spikes[pixel] += pixel_data
+        pixel += 1
+    data_file.close()
 
-    events = ev.numpy()
-    print("Target :", target.item()+1)
-    print("Number of events :", events.shape[1])
-    print("Shape du sample :",events.shape)
-
-    index_x = gesture.ordering.find("x") 
-    index_y = gesture.ordering.find("y")
-    index_t = gesture.ordering.find("t")
-
-    for pixel in range(int(N/4)):   # spatial reduction (each block of 4 pixels will be considered as one pixel)
-        row = pixel // (gesture.sensor_size[0])
-        col = pixel %  (gesture.sensor_size[1])
-        spike_idx = np.where((events[0, :, index_x]//2 == row) & (events[0, :, index_y]//2 == col))[0]   # 
-        spike_times = [start_timestamps + int(round(e)) for e in list(events[0, spike_idx, index_t] * 1e-3)] # spatial reduction (each event is rounded to the millisecond)
-        spikes[pixel] += spike_times
-
-    # print(np.sum([len(st) for st in spikes]))
-    # idx = ev[0, 0, index_x]*(gesture.sensor_size[0]) + ev[0, 0, index_y] # first spike
-    
-    print("Plus grand timestamp :",max(sum(spikes, []))-start_timestamps)
-    start_timestamps = max(sum(spikes,[]))
-    samples_time.append(start_timestamps)
+    samples_time.append(max(sum(spikes, [])))
+    print(samples_time)
+    print("Plus grand timestamp :", samples_time[-1]-samples_time[-2])
     print("")
-    return (spikes, samples_time, start_timestamps)
+    return (spikes, samples_time)
+
+def displayInfo(sample, category):
+    print("// Sample "+str(sample)+" for category "+str(category))
 
 
 ## MAIN
 
-# download and import DVS128 Gesture data
-dl = not os.path.isfile('data_gesture/gesture.zip')
-gesture = tonic.datasets.DVSGesture(save_to="./data_gesture", download=dl, train=True)
-loader = tonic.datasets.DataLoader(gesture, batch_size=1, shuffle=False)
-
-print("### Data loaded ###\n")
-N = np.prod(gesture.sensor_size)
-print("Sensor size du dataset :",gesture.sensor_size)
-print("Nombre de pixels :",N)  # len(spikes) = 16384 = 128*128
-print()
+#The DVS128 Gesture dataset samples are organized as follows : 
+stats = {
+    'Category 1': 97, 
+    'Category 2': 98, 
+    'Category 3': 98, 
+    'Category 4': 98, 
+    'Category 5': 98, 
+    'Category 6': 98, 
+    'Category 7': 98, 
+    'Category 8': 98, 
+    'Category 9': 98, 
+    'Category 10': 98, 
+    'Category 11': 98
+}
 
 # main loop
-start_timestamps = 0
-spikes = [[] for pixel in range(int(N/4))]
-samples_time = []
-event_by_sample = []
+spikes = [[] for pixel in range(int(128*128/4))]
+samples_time = [0]
 if args.same_samples:
     args.different_samples = False
 
-if args.loop == None : 
-    for category in args.categories:
-        print("// SAMPLE for category "+str(category)+" //")
+nb_sim = 1
+for category in args.categories:
+    if args.same_samples :
+        sample = np.random.randint(low=1, high=stats["Category "+str(category)]+1)
 
-        for ev,target in iter(loader):
-            if args.same_samples and target.item() == category-1: 
-                break
-            if args.different_samples and target.item() == category-1 and ev.numpy().shape[1] not in event_by_sample: 
-                event_by_sample.append(ev.numpy().shape[1])
-                break
+        displayInfo(nb_sim, category)
+        spikes, samples_time = getSpikes(category, sample, spikes, samples_time)
+        t_max = samples_time[-1]
 
-        spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
+        while nb_sim <= args.loop[0]:
+            nb_sim += 1
+            displayInfo(nb_sim, category)
+            for pixel in range(int(N/4)):
+                pixel_data = [samples_time[-1] + e for e in spikes[pixel] if e <=t_max] 
+                spikes[pixel] += pixel_data
+            samples_time.append(samples_time[-1] + t_max)
+            print("")
 
-else : 
-    nb_sim = 0
-    for category in args.categories:
-            if args.same_samples :
-                for ev,target in iter(loader):
-                    if target.item() == category-1:
-                        break
-                
-                spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
-                t_max = start_timestamps
+    elif args.different_samples :
+        samples = []
+        for l in range(args.loop[0]):
+            displayInfo(nb_sim, category)
+            nb_sim += 1
+            
+            while True :
+                sample = np.random.randint(low=1, high=stats["Category "+str(category)]+1)
+                if sample not in samples :
+                    samples.append(sample)
+                    break
+                elif l >= stats["Category "+str(category)]:
+                    samples=[sample]
+                    break
 
-                for l in range(args.loop[0]):
-                    print("// SAMPLE "+str(nb_sim+1)+" for category "+str(category))
-                    nb_sim += 1
-                    for pixel in range(int(N/4)):
-                        spike_times = [start_timestamps + e for e in spikes[pixel] if e <=t_max] # spatial reduction (each event is rounded to the millisecond)
-                        spikes[pixel] += spike_times
-                    start_timestamps = max(sum(spikes,[]))
-                    samples_time.append(start_timestamps)
-                    print("")
-
-
-            elif args.different_samples :
-                for l in range(args.loop[0]):
-                    print("// SAMPLE "+str(nb_sim+1)+" for category "+str(category))
-                    nb_sim += 1
-                
-                    for ev,target in iter(loader):
-                        if target.item() == category-1 and ev.numpy().shape[1] not in event_by_sample:
-                            event_by_sample.append(ev.numpy().shape[1])
-                            break
-                    spikes, samples_time, start_timestamps = getSpikes(ev, target, spikes, samples_time, start_timestamps)
+            spikes, samples_time = getSpikes(category, samples[-1], spikes, samples_time)
 
 
 # writing data into csv
