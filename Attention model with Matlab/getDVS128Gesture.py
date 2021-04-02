@@ -74,10 +74,12 @@ for category in args.categories:
         while nb_sim <= args.loop[0]:
             nb_sim += 1
             displayInfo(nb_sim, category)
-            for pixel in range(int(N/4)):
+            for pixel in range(len(spikes)):
                 pixel_data = [samples_time[-1] + e for e in spikes[pixel] if e <=t_max] 
                 spikes[pixel] += pixel_data
             samples_time.append(samples_time[-1] + t_max)
+            print(samples_time)
+            print("Plus grand timestamp :", t_max)
             print("")
 
     elif args.different_samples :
