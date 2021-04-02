@@ -2,6 +2,7 @@ import os
 import tonic 
 import tonic.transforms as tr
 import numpy as np
+
 # download and import DVS128 Gesture data
 dl = not os.path.isfile('data_gesture/gesture.zip')
 gesture = tonic.datasets.DVSGesture(save_to="./data_gesture", download=dl, train=True)
