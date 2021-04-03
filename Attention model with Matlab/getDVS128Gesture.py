@@ -83,19 +83,15 @@ for category in args.categories:
             print("")
 
     elif args.different_samples :
-        samples = []
+        samples = list(range(1, stats["Category "+str(category)]+1))
         for l in range(args.loop[0]):
             displayInfo(nb_sim, category)
             nb_sim += 1
             
-            while True :
-                sample = np.random.randint(low=1, high=stats["Category "+str(category)]+1)
-                if sample not in samples :
-                    samples.append(sample)
-                    break
-                elif l >= stats["Category "+str(category)]:
-                    samples=[sample]
-                    break
+            sample = np.random.choice(samples)
+            samples.remove(sample)
+            if len(sa) == 0:
+                samples=list(range(1, stats["Category "+str(category)]+1))
 
             spikes, samples_time = getSpikes(category, samples[-1], spikes, samples_time)
 
