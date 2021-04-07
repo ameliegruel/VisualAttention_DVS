@@ -14,8 +14,6 @@ parser.add_argument("--same_samples","-s", help="Get the same sample for a speci
 parser.add_argument("--loop","-l", help="Create a csv with same category L times", nargs=1, metavar="L", type=int, default=[1])
 args = parser.parse_args()
 
-print(args)
-
 
 ## FUNCTIONS
 def getSpikes(category, sample, spikes, samples_time):
@@ -31,12 +29,12 @@ def getSpikes(category, sample, spikes, samples_time):
 
     samples_time.append(max(sum(spikes, [])))
     print(samples_time)
-    print("Plus grand timestamp :", samples_time[-1]-samples_time[-2])
+    print("Bigger timestamp:", samples_time[-1]-samples_time[-2])
     print("")
     return (spikes, samples_time)
 
-def displayInfo(sample, category):
-    print("// Sample "+str(sample)+" for category "+str(category))
+def displayInfo(simu, category, sample):
+    print("// Simulation "+str(simu)+" for category "+str(category)+"\nSample: "+str(sample))
 
 
 ## MAIN
@@ -67,33 +65,33 @@ for category in args.categories:
     if args.same_samples :
         sample = np.random.randint(low=1, high=stats["Category "+str(category)]+1)
 
-        displayInfo(nb_sim, category)
+        displayInfo(nb_sim, category, sample)
         spikes, samples_time = getSpikes(category, sample, spikes, samples_time)
         t_max = samples_time[-1]
 
         while nb_sim <= args.loop[0]:
             nb_sim += 1
-            displayInfo(nb_sim, category)
+            displayInfo(nb_sim, category, sample)
             for pixel in range(len(spikes)):
                 pixel_data = [samples_time[-1] + e for e in spikes[pixel] if e <=t_max] 
                 spikes[pixel] += pixel_data
             samples_time.append(samples_time[-1] + t_max)
             print(samples_time)
-            print("Plus grand timestamp :", t_max)
+            print("Bigger timestamp:", t_max)
             print("")
 
     elif args.different_samples :
         samples = list(range(1, stats["Category "+str(category)]+1))
         for l in range(args.loop[0]):
-            displayInfo(nb_sim, category)
-            nb_sim += 1
-            
             sample = np.random.choice(samples)
             samples.remove(sample)
             if len(samples) == 0:
                 samples=list(range(1, stats["Category "+str(category)]+1))
 
-            spikes, samples_time = getSpikes(category, samples[-1], spikes, samples_time)
+            displayInfo(nb_sim, category, sample)
+            nb_sim += 1
+            
+            spikes, samples_time = getSpikes(category, sample, spikes, samples_time)
 
 
 # writing data into csv
