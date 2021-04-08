@@ -4,6 +4,7 @@ import tonic.transforms as tr
 import numpy as np
 import csv
 import argparse
+import datetime
 
 
 # set up PARSER 
@@ -19,6 +20,7 @@ args = parser.parse_args()
 def getSpikes(category, sample, spikes, samples_time):
     nom_file = "DVS128_data/Category"+str(category)+"_Sample"+str(sample)+".csv"
     print(nom_file)
+    print(datetime.datetime.now())
     data_file = open(nom_file, "r")
     pixel = 0
     for line in data_file:
@@ -26,33 +28,50 @@ def getSpikes(category, sample, spikes, samples_time):
         spikes[pixel] += pixel_data
         pixel += 1
     data_file.close()
-
-    samples_time.append(max(sum(spikes, [])))
+    
+    print(datetime.datetime.now())
+    bigger_ts = sample_lengths_file['Category'+str(category)+'_Sample'+str(sample)]
+    print(datetime.datetime.now())
+    
+    print("Bigger timestamp:", bigger_ts)
+    samples_time.append(samples_time[-1]+bigger_ts)
     print(samples_time)
-    print("Bigger timestamp:", samples_time[-1]-samples_time[-2])
+    print(datetime.datetime.now())
     print("")
     return (spikes, samples_time)
 
 def displayInfo(simu, category, sample):
     print("// Simulation "+str(simu)+" for category "+str(category)+"\nSample: "+str(sample))
 
+def getStatsCategory(cat):
+    #The DVS128 Gesture dataset samples are organized as follows : 
+    stats = {
+        'Category 1': 97, 
+        'Category 2': 98, 
+        'Category 3': 98, 
+        'Category 4': 98, 
+        'Category 5': 98, 
+        'Category 6': 98, 
+        'Category 7': 98, 
+        'Category 8': 98, 
+        'Category 9': 98, 
+        'Category 10': 98, 
+        'Category 11': 98
+    }
+
+    return stats["Category "+str(cat)]
+
+
 
 ## MAIN
 
-#The DVS128 Gesture dataset samples are organized as follows : 
-stats = {
-    'Category 1': 97, 
-    'Category 2': 98, 
-    'Category 3': 98, 
-    'Category 4': 98, 
-    'Category 5': 98, 
-    'Category 6': 98, 
-    'Category 7': 98, 
-    'Category 8': 98, 
-    'Category 9': 98, 
-    'Category 10': 98, 
-    'Category 11': 98
-}
+# read samples
+sample_lengths_file = {}
+file_sl = open("DVS128_data/sample_lengths.csv","r")
+for line in file_sl:
+    line=line.split(";")
+    sample_lengths_file[line[0]] = int(line[1])
+file_sl.close()
 
 # main loop
 spikes = [[] for pixel in range(int(128*128/4))]
@@ -63,7 +82,7 @@ if args.same_samples:
 nb_sim = 1
 for category in args.categories:
     if args.same_samples :
-        sample = np.random.randint(low=1, high=stats["Category "+str(category)]+1)
+        sample = np.random.randint(low=1, high=getStatsCategory(category)+1)
 
         displayInfo(nb_sim, category, sample)
         spikes, samples_time = getSpikes(category, sample, spikes, samples_time)
@@ -81,12 +100,12 @@ for category in args.categories:
             print("")
 
     elif args.different_samples :
-        samples = list(range(1, stats["Category "+str(category)]+1))
+        samples = list(range(1, getStatsCategory(category)+1))
         for l in range(args.loop[0]):
             sample = np.random.choice(samples)
             samples.remove(sample)
             if len(samples) == 0:
-                samples=list(range(1, stats["Category "+str(category)]+1))
+                samples=list(range(1, getStatsCategory(category)+1))
 
             displayInfo(nb_sim, category, sample)
             nb_sim += 1
