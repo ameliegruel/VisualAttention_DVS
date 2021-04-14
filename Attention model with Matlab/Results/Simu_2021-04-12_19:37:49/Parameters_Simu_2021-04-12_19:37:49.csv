@@ -1,2 +1,0 @@
-Simulation;Simulation loop;Number of active output neurons;Activation rate of output layer;Rate coding;Rank order coding - Accuracy;Rank order coding - Specificity;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;
-1;9;0.818;0.5977;1;0.095238;25;2;-15;0.025;60;-15;240;11;
