@@ -4,7 +4,7 @@ now=`date +"%F_%H-%M-%S"`
 start=`date +"%s"`
 mkdir Results/Simu_$now/
 touch Results/Simu_$now/Simulation_$now.csv
-echo "Simulation loop;Category;Sample;Bigger timestamp;" >> Results/Simu_$now/Simulation_$now.csv
+echo "Simulation;Video;Category;Sample;Bigger timestamp;" >> Results/Simu_$now/Simulation_$now.csv
 
 # parameters Attention
 thresholdAttention=25
@@ -22,7 +22,7 @@ nbOutputNeurons=11
 
 # save parameters
 touch Results/Simu_$now/Parameters_Simu_$now.csv
-echo "Simulation;Simulation loop;Number of active output neurons;Activation rate of output layer;Rate coding;Rank order coding - Accuracy;Rank order coding - Specificity;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;" > Results/Simu_$now/Parameters_Simu_$now.csv
+echo "Simulation;Number of active output neurons;Activation rate of output layer;Rate coding;Rank order coding - Accuracy;Rank order coding - Specificity;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;" > Results/Simu_$now/Parameters_Simu_$now.csv
 
 # define matlab commands 
 import_data="gesturedata=importdata('data/gesture_data.csv');samplestime=importdata('data/samples_time.csv');save('data/gesture_data.mat','gesturedata','-v7.3');"
@@ -80,7 +80,7 @@ echo "Categories;;$categories" > Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
 start=`date +"%s"`
 python3 getDVS128Gesture.py $@ | tee tmp.txt
 fin=`date +"%s"`
-cat tmp.txt | grep "^$\|Bigger\|Sample:\|//" | sed 's/^$/?/g' | grep -o "[0-9]*\|?" | tr '\n' ';' | sed 's/?/\n$s/g' >> Results/Simu_$now/Simulation_$now.csv
+cat tmp.txt | grep "^$\|Bigger\|Sample:\|//" | sed 's/^$/?/g' | sed "s/\/\//$s/g" | grep -o '[0-9]*\|?' | tr '\n' ';' | sed "s/?;/\n/g" >> Results/Simu_$now/Simulation_$now.csv
 rm tmp.txt
 
 echo "Sample times;"`cat data/samples_time.csv` >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
