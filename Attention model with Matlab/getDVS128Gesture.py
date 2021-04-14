@@ -41,7 +41,7 @@ def getSpikes(category, sample, spikes, samples_time):
     return (spikes, samples_time)
 
 def displayInfo(simu, category, sample):
-    print("// Simulation "+str(simu)+" for category "+str(category)+"\nSample: "+str(sample))
+    print("// Video "+str(simu)+" for category "+str(category)+"\nSample: "+str(sample))
 
 def getStatsCategory(cat):
     #The DVS128 Gesture dataset samples are organized as follows : 
@@ -126,6 +126,7 @@ os.system('csvtool transpose -t ";" -u ";" data/gesture_data.csv > data/T_gestur
 os.system('mv data/T_gesture_data.csv data/gesture_data.csv')
 print("Sample(s) have been saved as data/gesture_data.csv")
 
+print(len(samples_time))
 samples_data = open("data/samples_time.csv", "w")
 samples_data.write(";".join([str(sample) for sample in samples_time]))
 samples_data.close()
