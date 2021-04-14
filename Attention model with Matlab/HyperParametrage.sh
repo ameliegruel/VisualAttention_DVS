@@ -1,6 +1,6 @@
 #!/bin/bash
 
-now=`date +"%F_%T"`
+now=`date +"%F_%H-%M-%S"`
 mkdir Results/SimuHyper_$now
 touch Results/SimuHyper_$now/Simulation_$now.csv
 echo "Simulation loop;Number of active output neurons;Activation rate of output layer;Specific activation rate;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;" >> Results/SimuHyper_$now/Simulation_$now.csv

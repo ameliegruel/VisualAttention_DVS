@@ -1,6 +1,6 @@
 #!/bin/bash
 
-now=`date +"%F_%T"`
+now=`date +"%F_%H-%M-%S"`
 start=`date +"%s"`
 mkdir Results/Simu_$now/
 touch Results/Simu_$now/Simulation_$now.csv
@@ -86,8 +86,6 @@ rm tmp.txt
 echo "Sample times;"`cat data/samples_time.csv` >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
 echo "" >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
 echo "timestamps;neuron tags" >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
-echo "Samples of categories $cats have been saved as data/gesture_data.csv"
-echo "Times of the samples have been saved as data/samples_time.csv" 
 #
 
 # matlab command 

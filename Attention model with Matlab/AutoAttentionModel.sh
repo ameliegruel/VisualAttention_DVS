@@ -1,6 +1,6 @@
 #!/bin/bash
 
-now=`date +"%F_%T"`
+now=`date +"%F_%H-%M-%S"`
 mkdir Results/Simu_$now/
 touch Results/Simu_$now/Simulation_$now.csv
 echo "Simulation loop;Category;Number of events;Bigger timestamp;" >> Results/Simu_$now/Simulation_$now.csv
