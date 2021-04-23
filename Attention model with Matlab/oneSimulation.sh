@@ -2,27 +2,27 @@
 
 now=`date +"%F_%H-%M-%S"`
 start=`date +"%s"`
-mkdir Results/Simu_$now/
-touch Results/Simu_$now/Simulation_$now.csv
-echo "Simulation;Video;Category;Sample;Bigger timestamp;" >> Results/Simu_$now/Simulation_$now.csv
+# mkdir Results/Simu_$now/
+# touch Results/Simu_$now/Simulation_$now.csv
+# echo "Simulation;Video;Category;Sample;Bigger timestamp;" >> Results/Simu_$now/Simulation_$now.csv
 
 # parameters Attention
-thresholdAttention=25
-tmAttention=2
+thresholdAttention=12
+tmAttention=25
 
 # parameters Inter
-thresholdInter=-15
-tmInter=0.025
+thresholdInter=12
+tmInter=25
 nbInterNeurons=60
 
 # parameters Output
-thresholdOutput=-15
-tmOutput=240
+thresholdOutput=12
+tmOutput=25
 nbOutputNeurons=11
 
 # save parameters
-touch Results/Simu_$now/Parameters_Simu_$now.csv
-echo "Simulation;Number of active output neurons;Activation rate of output layer;Rate coding;Rank order coding - Accuracy;Rank order coding - Specificity;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;" > Results/Simu_$now/Parameters_Simu_$now.csv
+# touch Results/Simu_$now/Parameters_Simu_$now.csv
+# echo "Simulation;Number of active output neurons;Activation rate of output layer;Rate coding;Rank order coding - Accuracy;Rank order coding - Specificity;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;" > Results/Simu_$now/Parameters_Simu_$now.csv
 
 # define matlab commands 
 import_data="gesturedata=importdata('data/gesture_data.csv');samplestime=importdata('data/samples_time.csv');save('data/gesture_data.mat','gesturedata','-v7.3');"
@@ -60,10 +60,14 @@ do
     fi
 done 
 echo "Categories:" $cats "over" $loop "loop(s)"
+simu_parameters=""
 
 categories=""
+nbcat=0
 for c in ${cats[@]} 
 do 
+    nbcat=$((nbcat+1))
+    simu_parameters=$simu_parameters"SIMU.cat$nbcat=$c;"
     l=0
     while ((l < loop))
     do 
@@ -72,44 +76,46 @@ do
     done
 done
 
-mkdir Results/Simu_$now/Simu$s
-touch Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
-echo "Categories;;$categories" > Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
+simu_parameters=$simu_parameters"SIMU.nb_categories=$nbcat;"
+echo "simu param: $simu_parameters"
+
+# mkdir Results/Simu_$now/Simu$s
+# touch Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
+# echo "Categories;;$categories" > Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
 
 # get input data using tonic
 start=`date +"%s"`
 python3 getDVS128Gesture.py $@ | tee tmp.txt
 fin=`date +"%s"`
-cat tmp.txt | grep "^$\|Bigger\|Sample:\|//" | sed 's/^$/?/g' | sed "s/\/\//$s/g" | grep -o '[0-9]*\|?' | tr '\n' ';' | sed "s/?;/\n/g" >> Results/Simu_$now/Simulation_$now.csv
-rm tmp.txt
+# cat tmp.txt | grep "^$\|Bigger\|Sample:\|//" | sed 's/^$/?/g' | sed "s/\/\//$s/g" | grep -o '[0-9]*\|?' | tr '\n' ';' | sed "s/?;/\n/g" >> Results/Simu_$now/Simulation_$now.csv
+# rm tmp.txt
 
-echo "Sample times;"`cat data/samples_time.csv` >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
-echo "" >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
-echo "timestamps;neuron tags" >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
+# echo "Sample times;"`cat data/samples_time.csv` >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
+# echo "" >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
+# echo "timestamps;neuron tags" >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
 #
 
 # matlab command 
-# save_spikeTrain="dlmwrite('Results/Simu_$now/Simu$s/OutputData_Simu$s.csv', OutputData, 'delimiter',';', '-append');"
-save_spikeTrain="data_file=fopen('Results/Simu_$now/Simu$s/OutputData_Simu$s.csv','a');for i=1:length(OutputData); fprintf(data_file, '%d;%d;\n', OutputData(i,:)); end; fclose(data_file);"
-run_plots="addpath('./drawingUtils');run('plot_results.m');saveas(gcf,'Results/Simu_$now/Simu$s/Output_Simu$s.png');close(gcf);"
+# run_plots="addpath('./drawingUtils');run('plot_results.m');saveas(gcf,'Results/Simu_$now/Simu$s/Output_Simu$s.png');close(gcf);"
+run_plots="addpath('./drawingUtils');run('plot_results.m');close(gcf);"
 
 # run matlab 
-/usr/local/MATLAB/R2018a/bin/matlab -nosplash -nodesktop -r $import_data$Attention_parameters$Intermediate_parameters$Output_parameters$run_scripts$run_plots$run_accuracy$exit | tee tmp.txt
+/usr/local/MATLAB/R2018a/bin/matlab -nosplash -nodesktop -r $import_data$simu_parameters$Attention_parameters$Intermediate_parameters$Output_parameters$run_scripts$run_plots$run_accuracy$exit #| tee tmp.txt
 
 # save results
-sed -n '/OutputData/,/done/p' tmp.txt | grep '[0-9]' | sed 's/  */;/g' | sed 's/^;//g' >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
+# sed -n '/OutputData/,/done/p' tmp.txt | grep '[0-9]' | sed 's/  */;/g' | sed 's/^;//g' >> Results/Simu_$now/Simu$s/OutputData_Simu$s.csv
 
 # save parameters
-nbActiveOutputNeurons=$(grep "activated Output" tmp.txt | grep -o "[0-9]*")
-rateActiveOutput=$(grep "Percentage of Output layer activation" tmp.txt | grep -o "[0-9]\.*[0-9]*")
-rateCoding=$(grep "Accuracy - rate coding" tmp.txt | grep -o "[0-9]\.*[0-9]*")
-rankOrderAccuracy=$(grep "Accuracy - rank order coding" tmp.txt | grep -o "[0-9]\.*[0-9]*")
-rankOrderSpecificity=$(grep "Specificity - rank order coding" tmp.txt | grep -o "[0-9]\.*[0-9]*")
-echo "$s;$nbActiveOutputNeurons;$rateActiveOutput;$rateCoding;$rankOrderAccuracy;$rankOrderSpecificity;$thresholdAttention;$tmAttention;$thresholdInter;$tmInter;$nbInterNeurons;$thresholdOutput;$tmOutput;$nbOutputNeurons;" >> Results/Simu_$now/Parameters_Simu_$now.csv
-rm tmp.txt
+# nbActiveOutputNeurons=$(grep "activated Output" tmp.txt | grep -o "[0-9]*")
+# rateActiveOutput=$(grep "Percentage of Output layer activation" tmp.txt | grep -o "[0-9]\.*[0-9]*")
+# rateCoding=$(grep "Accuracy - rate coding" tmp.txt | grep -o "[0-9]\.*[0-9]*")
+# rankOrderAccuracy=$(grep "Accuracy - rank order coding" tmp.txt | grep -o "[0-9]\.*[0-9]*")
+# rankOrderSpecificity=$(grep "Specificity - rank order coding" tmp.txt | grep -o "[0-9]\.*[0-9]*")
+# echo "$s;$nbActiveOutputNeurons;$rateActiveOutput;$rateCoding;$rankOrderAccuracy;$rankOrderSpecificity;$thresholdAttention;$tmAttention;$thresholdInter;$tmInter;$nbInterNeurons;$thresholdOutput;$tmOutput;$nbOutputNeurons;" >> Results/Simu_$now/Parameters_Simu_$now.csv
+# rm tmp.txt
 
 echo "Simulation done"
-end=`date +"%s"`
+end_sim=`date +"%s"`
 
 echo "Récupération des données en" $(($fin-$start)) "secondes"
-echo "Simulation complète en" $(($end-$start)) "secondes"
+echo "Simulation complète en" $(($end_sim-$start)) "secondes"
