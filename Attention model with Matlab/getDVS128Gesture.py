@@ -13,6 +13,7 @@ parser.add_argument("categories", metavar="C", type=int, nargs="+", help="Wanted
 parser.add_argument("--different_samples","-d", help="Get different samples for a specific category called many times (True by default)", action='store_true', default=True)
 parser.add_argument("--same_samples","-s", help="Get the same sample for a specific category called many times", action='store_true')
 parser.add_argument("--loop","-l", help="Create a csv with same category L times", nargs=1, metavar="L", type=int, default=[1])
+parser.add_argument("--hyperparameters","-hp", help="Run the hyperparametrization during HP loops", nargs=1, metavar="HP", type=int, default=[3])
 args = parser.parse_args()
 
 
