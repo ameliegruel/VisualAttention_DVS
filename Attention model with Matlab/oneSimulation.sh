@@ -26,7 +26,7 @@ touch Results/Simu_$now/Parameters_Simu_$now.csv
 # When accuracy run with Matlab script: 
 #   echo "Simulation;Number of active output neurons;Activation rate of output layer;Rate coding;Rank order coding - Accuracy;Rank order coding - Specificity;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;" > Results/Simu_$now/Parameters_Simu_$now.csv
 
-# When accuracy run with Scikit-learn:
+# When accuracy run with Random Forest Classifier (Scikit-learn):
 echo "Simulation;Rate coding;Rank order coding;Latency coding;threshold Attention;tm Attention;threshold Intermediate;tm Intermediate;neurons Intermediate;threshold Output;tm Output;neurons Output;" > Results/Simu_$now/Parameters_Simu_$now.csv
 
 # define matlab commands 
@@ -118,7 +118,7 @@ sed -n '/OutputData/,/done/p' tmp.txt | grep '[0-9]' | sed 's/  */;/g' | sed 's/
 #    rankOrderSpecificity=$(grep "Specificity - rank order coding" tmp.txt | grep -o "[0-9]\.*[0-9]*")
 #    echo "$s;$nbActiveOutputNeurons;$rateActiveOutput;$rateCoding;$rankOrderAccuracy;$rankOrderSpecificity;$thresholdAttention;$tmAttention;$thresholdInter;$tmInter;$nbInterNeurons;$thresholdOutput;$tmOutput;$nbOutputNeurons;" >> Results/Simu_$now/Parameters_Simu_$now.csv
 
-# When accuracy run with Scikit learn:
+# When accuracy run with Random Forest Classifier (Scikit-learn):
 rateCodingAccuracy=$(grep "Rate" tmp.txt | grep -o "[0-9]\.[0-9]*")
 rankOrderCodingAccuracy=$(grep "Rank" tmp.txt | grep -o "[0-9]\.[0-9]*")
 latencyCodingAccuracy=$(grep "Latency" tmp.txt | grep -o "[0-9]\.[0-9]*")
