@@ -23,13 +23,16 @@ def getSpikes(ev, target):
     index_x = gesture.ordering.find("x") 
     index_y = gesture.ordering.find("y")
     index_t = gesture.ordering.find("t")
-    spikes = [[] for pixel in range(int(N/4))]
+    # spikes = [[] for pixel in range(int(N/4))]
+    spikes = [[] for pixel in range(N)]
 
-    for pixel in range(int(N/4)):   # spatial reduction (each block of 4 pixels will be considered as one pixel)
+    # for pixel in range(int(N/4)):   # spatial reduction (each block of 4 pixels will be considered as one pixel)
+    for pixel in range(N):
         row = pixel // (gesture.sensor_size[0])
         col = pixel %  (gesture.sensor_size[1])
         spike_idx = np.where((events[0, :, index_x]//2 == row) & (events[0, :, index_y]//2 == col))[0]   # 
-        spike_times = [int(round(e)) for e in list(events[0, spike_idx, index_t] * 1e-3)] # spatial reduction (each event is rounded to the millisecond)
+        # spike_times = [int(round(e)) for e in list(events[0, spike_idx, index_t] * 1e-3)] # temporal reduction (each event is rounded to the millisecond)
+        spike_times = list(events[0, spike_idx, index_t] * 1e-3)
         spikes[pixel] += spike_times
 
     max_time = max(sum(spikes,[]))
@@ -39,7 +42,8 @@ def getSpikes(ev, target):
 
 # main loop
 categories = {"Category "+str(c):0 for c in range(1,12)}
-length_data = open("DVS128_data/samples_length.csv", "w")
+# length_data = open("DVS128_data/samples_length.csv", "w")
+length_data = open("DVS128_data_noreduction/samples_length.csv", "w")
 
 for ev,target in iter(loader):
     print(target.item()+1)
@@ -51,7 +55,8 @@ for ev,target in iter(loader):
     length_data.write("Category"+str(target.item()+1)+"_Sample"+str(categories["Category "+str(target.item()+1)])+";"+str(max_length)+";\n")
 
     # writing data into csv
-    gesture_data = open("DVS128_data/Category"+str(target.item()+1)+"_Sample"+str(categories["Category "+str(target.item()+1)])+".csv","w")
+    # gesture_data = open("DVS128_data/Category"+str(target.item()+1)+"_Sample"+str(categories["Category "+str(target.item()+1)])+".csv","w")
+    gesture_data = open("DVS128_data_noreduction/Category"+str(target.item()+1)+"_Sample"+str(categories["Category "+str(target.item()+1)])+".csv","w")
     for pixel in spikes:
         gesture_data.write(";".join([str(e) for e in pixel]))
         gesture_data.write(";\n")
