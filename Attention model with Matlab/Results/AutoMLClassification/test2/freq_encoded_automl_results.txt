@@ -1,0 +1,40 @@
+=====================================================
+
+              precision    recall  f1-score   support
+
+           3       1.00      0.45      0.62        11
+           4       0.56      1.00      0.71        10
+           9       1.00      0.78      0.88         9
+
+    accuracy                           0.73        30
+   macro avg       0.85      0.74      0.74        30
+weighted avg       0.85      0.73      0.73        30
+
+
+================================================================
+
+[(0.333333, SimpleClassificationPipeline({'balancing:strategy': 'weighting', 'classifier:__choice__': 'sgd', 'data_preprocessing:categorical_transformer:categorical_encoding:__choice__': 'no_encoding', 'data_preprocessing:categorical_transformer:category_coalescence:__choice__': 'no_coalescense', 'data_preprocessing:numerical_transformer:imputation:strategy': 'most_frequent', 'data_preprocessing:numerical_transformer:rescaling:__choice__': 'power_transformer', 'feature_preprocessor:__choice__': 'kitchen_sinks', 'classifier:sgd:alpha': 1.7789648090499715e-06, 'classifier:sgd:average': 'True', 'classifier:sgd:fit_intercept': 'True', 'classifier:sgd:learning_rate': 'optimal', 'classifier:sgd:loss': 'hinge', 'classifier:sgd:penalty': 'l1', 'classifier:sgd:tol': 0.035614936117451354, 'feature_preprocessor:kitchen_sinks:gamma': 0.04087441643278372, 'feature_preprocessor:kitchen_sinks:n_components': 2936},
+dataset_properties={
+  'task': 2,
+  'sparse': False,
+  'multilabel': False,
+  'multiclass': True,
+  'target_type': 'classification',
+  'signed': False})),
+(0.333333, SimpleClassificationPipeline({'balancing:strategy': 'weighting', 'classifier:__choice__': 'k_nearest_neighbors', 'data_preprocessing:categorical_transformer:categorical_encoding:__choice__': 'one_hot_encoding', 'data_preprocessing:categorical_transformer:category_coalescence:__choice__': 'minority_coalescer', 'data_preprocessing:numerical_transformer:imputation:strategy': 'most_frequent', 'data_preprocessing:numerical_transformer:rescaling:__choice__': 'standardize', 'feature_preprocessor:__choice__': 'fast_ica', 'classifier:k_nearest_neighbors:n_neighbors': 19, 'classifier:k_nearest_neighbors:p': 2, 'classifier:k_nearest_neighbors:weights': 'uniform', 'data_preprocessing:categorical_transformer:category_coalescence:minority_coalescer:minimum_fraction': 0.2181215158795369, 'feature_preprocessor:fast_ica:algorithm': 'deflation', 'feature_preprocessor:fast_ica:fun': 'logcosh', 'feature_preprocessor:fast_ica:whiten': 'True', 'feature_preprocessor:fast_ica:n_components': 896},
+dataset_properties={
+  'task': 2,
+  'sparse': False,
+  'multilabel': False,
+  'multiclass': True,
+  'target_type': 'classification',
+  'signed': False})),
+(0.333333, SimpleClassificationPipeline({'balancing:strategy': 'none', 'classifier:__choice__': 'decision_tree', 'data_preprocessing:categorical_transformer:categorical_encoding:__choice__': 'one_hot_encoding', 'data_preprocessing:categorical_transformer:category_coalescence:__choice__': 'no_coalescense', 'data_preprocessing:numerical_transformer:imputation:strategy': 'median', 'data_preprocessing:numerical_transformer:rescaling:__choice__': 'power_transformer', 'feature_preprocessor:__choice__': 'feature_agglomeration', 'classifier:decision_tree:criterion': 'gini', 'classifier:decision_tree:max_depth_factor': 0.6606283620693096, 'classifier:decision_tree:max_features': 1.0, 'classifier:decision_tree:max_leaf_nodes': 'None', 'classifier:decision_tree:min_impurity_decrease': 0.0, 'classifier:decision_tree:min_samples_leaf': 17, 'classifier:decision_tree:min_samples_split': 5, 'classifier:decision_tree:min_weight_fraction_leaf': 0.0, 'feature_preprocessor:feature_agglomeration:affinity': 'cosine', 'feature_preprocessor:feature_agglomeration:linkage': 'complete', 'feature_preprocessor:feature_agglomeration:n_clusters': 355, 'feature_preprocessor:feature_agglomeration:pooling_func': 'mean'},
+dataset_properties={
+  'task': 2,
+  'sparse': False,
+  'multilabel': False,
+  'multiclass': True,
+  'target_type': 'classification',
+  'signed': False})),
+]
