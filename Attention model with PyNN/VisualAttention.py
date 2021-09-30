@@ -139,7 +139,7 @@ Conn_input_inter = sim.Projection(
 
 # connection WTA inter
 
-FixedInhibitory_WTA = sim.StaticSynapse(weight=0)
+FixedInhibitory_WTA = sim.StaticSynapse(weight=10)
 WTA = sim.Projection(
     Intermediate, Intermediate,
     connector=sim.AllToAllConnector(allow_self_connections=False),
