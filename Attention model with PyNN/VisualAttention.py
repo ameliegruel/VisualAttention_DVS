@@ -13,6 +13,7 @@ from pyNN.utility import get_simulator, init_logging, normalized_filename
 from pyNN.utility.plotting import DataTable, Figure, Panel
 from quantities import ms
 import matplotlib.pyplot as plt
+from patternGeneration import patternGenerator, events2spikes
 import numpy as np
 import math
 import neo
@@ -22,8 +23,9 @@ import datetime
 
 sim, options = get_simulator(("--plot-figure", "Plot the simulation results to a file", {"action": "store_true"}),
                              ("--plot-signal", "Plot the input signal and display", {"action": "store_true"}),
-                             ("--fit-curve", "Calculate the best-fit curve to the weight-delta_t measurements", {"action": "store_true"}),
+                             ("--pattern-generator", "Generates nex pattern according to the user's specification", {"action":"store_true"}),
                              ("--attention","Run the network with the attention neuron", {"action": "store_true"}),
+                             ("--fit-curve", "Calculate the best-fit curve to the weight-delta_t measurements", {"action": "store_true"}),
                              ("--dendritic-delay-fraction", "What fraction of the total transmission delay is due to dendritic propagation", {"default": 1}),
                              ("--debug", "Print debugging information"))
 
@@ -41,42 +43,49 @@ sim.setup(timestep=0.01)
 
 ###############################################  DATA   ########################################################
 
-nSignals = 1
-start = 0
+if not options.pattern_generator:
+    nSignals = 1
+    start = 0
 
-# get data from Bernet data.mat 
-file_signal = open("data.csv", "r")
-line_signal = file_signal.readline()
+    # get data from Bernet data.mat 
+    file_signal = open("data.csv", "r")
+    line_signal = file_signal.readline()
 
-if options.plot_signal :
-    for (i,j) in [(50,1),(100,2),(1000,3), (10000,4)] :
-        file_data = list(map(float, line_signal.split(",")[:i]))
-        plt.subplot(410+j)
-        plt.plot(file_data)
-        plt.title("Input signal over "+str(i)+" timesteps")
-        plt.xlabel("Simulation timesteps")
-    plt.subplots_adjust(hspace=1)
-    plt.show()
+    if options.plot_signal :
+        for (i,j) in [(50,1),(100,2),(1000,3), (10000,4)] :
+            file_data = list(map(float, line_signal.split(",")[:i]))
+            plt.subplot(410+j)
+            plt.plot(file_data)
+            plt.title("Input signal over "+str(i)+" timesteps")
+            plt.xlabel("Simulation timesteps")
+        plt.subplots_adjust(hspace=1)
+        plt.show()
 
 
-file_data = list(map(float, line_signal.split(",")[:100]))
-x_input = 10
-y_input = math.ceil((max(file_data) - min(file_data))*10)
-# print(max(file_data), min(file_data), y_input, x_input)
-t_data = len(file_data) - x_input
+    file_data = list(map(float, line_signal.split(",")[:100]))
+    x_input = 10
+    y_input = math.ceil((max(file_data) - min(file_data))*10)
+    # print(max(file_data), min(file_data), y_input, x_input)
+    t_data = len(file_data) - x_input
 
-signal = [[] for i in range(x_input*y_input)]    # setting different spike times for each cell in the population requires an array of array
+    signal = [[] for i in range(x_input*y_input)]    # setting different spike times for each cell in the population requires an array of array
 
-for t in range(t_data):
-    for x in range(x_input):
-        y_data = math.floor(10*(file_data[t + x] - min(file_data)))
-        # print(y_data)
-        for overlap in [-2,-1,0,1,2] : # Noverlap = 5 
-            try : 
-                signal[(y_data-1+overlap)*x_input + x].append(t)
-            except IndexError: 
-                pass
-signal = [Sequence(signal_1_neuron) for signal_1_neuron in signal]  # more specifically array of inner arrays wrapped in Sequence class (to avoid ambiguities)
+    for t in range(t_data):
+        for x in range(x_input):
+            y_data = math.floor(10*(file_data[t + x] - min(file_data)))
+            # print(y_data)
+            for overlap in [-2,-1,0,1,2] : # Noverlap = 5 
+                try : 
+                    signal[(y_data-1+overlap)*x_input + x].append(t)
+                except IndexError: 
+                    pass
+    signal = [Sequence(signal_1_neuron) for signal_1_neuron in signal]  # more specifically array of inner arrays wrapped in Sequence class (to avoid ambiguities)
+
+else : 
+    events = patternGenerator.getPattern()
+    signal, x_input, y_input = events2spikes.ev2spikes(events, 3)
+    t_data = np.max(events[::,3])
+    print(signal)
 
 
 ############################################### NETWORK #########################################################
@@ -89,7 +98,6 @@ Input =  sim.Population(
     label="Input"
 )
 Input.record("spikes")
-# print(Input.size)
 
 # LIF neurons for attention, intermediate and output
 
@@ -189,7 +197,7 @@ if options.attention :
         Attention, Intermediate,
         connector=sim.AllToAllConnector(allow_self_connections=False),
         synapse_type=sim.StaticSynapse(weight=60),
-        receptor_type="",
+        receptor_type="excitatory",
         label="Connection attention to intermediate"
     )
 
@@ -197,7 +205,7 @@ if options.attention :
     Conn_attention_output = sim.Projection(
         Attention, Output,
         connector=sim.AllToAllConnector(allow_self_connections=False),
-        synapse_type=sim.StaticSynapse(weight=-10),
+        synapse_type=sim.StaticSynapse(weight=10),
         receptor_type="inhibitory",
         label="Connection attention to output"
     )
@@ -288,7 +296,7 @@ class STDP_Input_Inter(object):
         except IndexError : 
             pass
         self.projection.set(weight=self.w)
-        # for idx in range(self.l):
+        # for idx in range(x_input, y_input, self.l):
         #     print(idx)
         #     list(self.projection.connections)[idx].weight=self.w.flat[idx]   
         print("input inter stop", datetime.datetime.now())
