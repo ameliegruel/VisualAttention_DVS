@@ -1,0 +1,27 @@
+Category;Description
+A;Successive same-size sequences of no events and events with constant timestep between each timestamps
+B;Successive same-size sequences of no events and events which timestamps follow a Poisson distribution
+C;Successive same-size sequences of different patterns, corresponding to different letters in Morse code
+D;Successive same-size sequences of no events and patterns corresponding to different letters in Morse code
+E;
+F;
+G;
+H;
+I;
+J;
+K;
+L;
+M;
+N;
+O;
+P;
+Q;
+R;
+S;
+T;
+U;
+V;
+W;
+X;
+Y;
+Z;
