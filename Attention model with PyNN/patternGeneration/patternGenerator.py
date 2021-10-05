@@ -76,13 +76,16 @@ def getMorse1Dpattern(begin_ts, letter=None):
     }
     events = np.array((1,4))
     if letter==None:
+        global description
         while True:
             letter = input("Which letter/number to include in the pattern ? (A to Z, 0 to 9) ")
             try :
                 pattern, begin_ts = morse2events(morseCode[letter],begin_ts)
                 events=np.concatenate((events, pattern), axis=0)
+                description+=letter
             except KeyError:
                 break
+            description+=";"
     else : 
         pattern, begin_ts = morse2events(morseCode[letter],begin_ts)
         events=np.concatenate((events, pattern), axis=0)
@@ -117,7 +120,7 @@ def get1Dpattern(user, length_pattern=None, length_empty=None, nb_sequences=None
     elif user == "D":
         letter = input("Which letter/number ? ")
         nb_letter = testNumericalInput(input("How many time the same letter "+letter+" ? "))
-        description += str(nb_letter)+" repetitions of the same letter "+letter+" in Morse code"
+        description += str(nb_letter)+" repetitions of the same letter "+letter+" in Morse code;"
         pattern, pattern_begin_ts = getMorse1Dpattern(begin_ts, letter)
         for _ in range(nb_letter-1):
             pattern = np.concatenate((pattern, np.vectorize(lambda x: x+pattern_begin_ts if x>0 else x)(pattern)), axis=0)
