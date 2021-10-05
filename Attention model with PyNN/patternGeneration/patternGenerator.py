@@ -5,6 +5,7 @@ Author : Amélie Gruel - Université Côte d'Azur, CNRS/i3S, France - amelie.gru
 
 from datetime import datetime
 import numpy as np
+from numpy.core.fromnumeric import size
 
 description=""
 
@@ -74,7 +75,7 @@ def getMorse1Dpattern(begin_ts, letter=None):
         "8": "___..",
         "9": "____."
     }
-    events = np.array((1,4))
+    events = np.zeros((0,4))
     if letter==None:
         global description
         while True:
@@ -85,7 +86,7 @@ def getMorse1Dpattern(begin_ts, letter=None):
                 description+=letter
             except KeyError:
                 break
-            description+=";"
+        description+=";"
     else : 
         pattern, begin_ts = morse2events(morseCode[letter],begin_ts)
         events=np.concatenate((events, pattern), axis=0)
@@ -95,7 +96,7 @@ def getMorse1Dpattern(begin_ts, letter=None):
 def get1Dpattern(user, length_pattern=None, length_empty=None, nb_sequences=None):
     global description
     
-    events = np.array((1,4))
+    events = np.zeros((0,4))
     begin_ts = 0
     
     if user == "A":
@@ -115,7 +116,7 @@ def get1Dpattern(user, length_pattern=None, length_empty=None, nb_sequences=None
     elif user == "C":
         description += "Succession of different letters in Morse code, following the pattern "
         pattern, begin_ts = getMorse1Dpattern(begin_ts)
-        events = np.concatenate((events))
+        events = np.concatenate((events, pattern), axis=0)
 
     elif user == "D":
         letter = input("Which letter/number ? ")
@@ -157,7 +158,7 @@ def getPattern():
     if user in ["A", "B", "D","E"]: 
         size_empty = testNumericalInput(input("How long without events between the patterns/event sequences ? "))
         nb_sequences = testNumericalInput(input("How many event sequences ? "))
-        description+=str(nb_sequences)+" sequences, separated by "+str(nb_sequences)+" timesteps;"
+        description+=str(nb_sequences)+" sequences, separated by "+str(size_empty)+" timesteps;"
         
     events = get1Dpattern(user,length_pattern=size_sequence, length_empty=size_empty, nb_sequences=nb_sequences)
     events[::,2] = 1
@@ -181,3 +182,5 @@ def testNumericalInput(user_input):
         except ValueError :
             user_input = input("Incorrect Value - Please enter a numerical value: ")
     return int(user_input)
+
+print(getPattern())
