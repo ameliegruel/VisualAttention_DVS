@@ -23,11 +23,14 @@ import datetime
 
 sim, options = get_simulator(("--plot-figure", "Plot the simulation results to a file", {"action": "store_true"}),
                              ("--plot-signal", "Plot the input signal and display", {"action": "store_true"}),
-                             ("--pattern-generator", "Generates nex pattern according to the user's specification", {"action":"store_true"}),
+                             ("--pattern", "Use pattern generated according to the user's specification", {"default":False}),
                              ("--attention","Run the network with the attention neuron", {"action": "store_true"}),
                              ("--fit-curve", "Calculate the best-fit curve to the weight-delta_t measurements", {"action": "store_true"}),
                              ("--dendritic-delay-fraction", "What fraction of the total transmission delay is due to dendritic propagation", {"default": 1}),
                              ("--debug", "Print debugging information"))
+
+print(options)
+print(options.pattern)
 
 if options.debug:
     init_logging(None, debug=True)
@@ -43,7 +46,7 @@ sim.setup(timestep=0.01)
 
 ###############################################  DATA   ########################################################
 
-if not options.pattern_generator:
+if not options.pattern:
     nSignals = 1
     start = 0
 
@@ -82,7 +85,11 @@ if not options.pattern_generator:
     signal = [Sequence(signal_1_neuron) for signal_1_neuron in signal]  # more specifically array of inner arrays wrapped in Sequence class (to avoid ambiguities)
 
 else : 
-    events = patternGenerator.getPattern()
+    try:
+        events = np.load(options.pattern)
+    except (ValueError, FileNotFoundError, TypeError):
+        print("Error: The input file has to be of format .npy")
+        sys.exit()
     signal, x_input, y_input = events2spikes.ev2spikes(events, 3)
     t_data = np.max(events[::,3])
     print(signal)
