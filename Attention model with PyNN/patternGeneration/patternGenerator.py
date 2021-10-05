@@ -163,8 +163,8 @@ def getPattern():
     events[::,2] = 1
 
     events_filename="pattern"+user+"_"+datetime.now().strftime("%Y%m%d_%H%M%S.npy")
-    np.save("patternGeneration/generatedPatterns/"+events_filename, events)
-    describe_file = open("patternGeneration/generatedPatterns.csv","a") # adds description to existing file
+    np.save("generatedPatterns/"+events_filename, events)
+    describe_file = open("generatedPatterns.csv","a") # adds description to existing file
     describe_file.write(events_filename+";"+description+"\n")
     describe_file.close()
 
