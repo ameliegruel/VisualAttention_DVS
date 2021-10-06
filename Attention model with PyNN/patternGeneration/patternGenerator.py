@@ -123,26 +123,26 @@ def get1Dpattern(user, length_pattern=None, length_empty=None, nb_sequences=None
         nb_letter = testNumericalInput(input("How many time the same letter "+letter+" ? "))
         description += str(nb_letter)+" repetitions of the same letter "+letter+" in Morse code;"
         full_pattern = np.zeros((0,4))
-        pattern_begin_ts = begin_ts+1    # easier to compute the succession of Morse code this way 
+        pattern_begin_ts = begin_ts
         
         for _ in range(nb_letter):
             pattern, pattern_begin_ts = getMorse1Dpattern(pattern_begin_ts, letter)
             full_pattern = np.concatenate((full_pattern, pattern), axis=0)
 
         for _ in range(nb_sequences):
-            begin_ts=getEmpty1Dpattern(begin_ts, length_empty) - 1 # to compensate for the pattern_begin_ts adding 1 to begin_ts
+            begin_ts=getEmpty1Dpattern(begin_ts, length_empty)
             print(begin_ts, end="   ")
             events = np.concatenate((events, np.concatenate((full_pattern[::,:3], full_pattern[::,3:]+begin_ts), axis=1) ), axis=0)
-            begin_ts += pattern_begin_ts - 1   # to compensate for the pattern_begin_ts adding 1 to begin_rs
+            begin_ts += pattern_begin_ts
             print(begin_ts)
  
     elif user == "E":
         description += "Succession of different letters in Morse code, following the pattern "
-        pattern, pattern_begin_ts = getMorse1Dpattern(begin_ts)
+        pattern, pattern_begin_ts = getMorse1Dpattern(begin_ts+1)    # easier to compute the succession of Morse code this way 
         for _ in range(nb_sequences):
-            begin_ts=getEmpty1Dpattern(begin_ts, length_empty)
+            begin_ts=getEmpty1Dpattern(begin_ts, length_empty) - 1 # to compensate for the pattern_begin_ts adding 1 to begin_ts
             events = np.concatenate((events, np.vectorize(lambda x: x+begin_ts if x>0 else x)(pattern)), axis=0)
-            begin_ts += pattern_begin_ts
+            begin_ts += pattern_begin_ts - 1   # to compensate for the pattern_begin_ts adding 1 to begin_rs
 
 
     return events
