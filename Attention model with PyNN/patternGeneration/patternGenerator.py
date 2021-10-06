@@ -138,11 +138,11 @@ def get1Dpattern(user, length_pattern=None, length_empty=None, nb_sequences=None
  
     elif user == "E":
         description += "Succession of different letters in Morse code, following the pattern "
-        pattern, pattern_begin_ts = getMorse1Dpattern(begin_ts+1)    # easier to compute the succession of Morse code this way 
+        pattern, pattern_begin_ts = getMorse1Dpattern(begin_ts)    # easier to compute the succession of Morse code this way 
         for _ in range(nb_sequences):
             begin_ts=getEmpty1Dpattern(begin_ts, length_empty) - 1 # to compensate for the pattern_begin_ts adding 1 to begin_ts
-            events = np.concatenate((events, np.vectorize(lambda x: x+begin_ts if x>0 else x)(pattern)), axis=0)
-            begin_ts += pattern_begin_ts - 1   # to compensate for the pattern_begin_ts adding 1 to begin_rs
+            events = np.concatenate((events, np.concatenate((pattern[::,:3], pattern[::,3:]+begin_ts), axis=1) ), axis=0)
+            begin_ts += pattern_begin_ts   # to compensate for the pattern_begin_ts adding 1 to begin_rs
 
 
     return events
