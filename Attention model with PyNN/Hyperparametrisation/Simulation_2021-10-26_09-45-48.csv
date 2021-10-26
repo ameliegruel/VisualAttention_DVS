@@ -1,0 +1,3 @@
+Simulation;Output file name;Computation time;threshold Attention;tm Attention;tau refrac Attention;threshold Intermediate;tm Intermediate;tau refrac Intermediate;threshold Output;tm Output;tau refrac Output;w WTA inter;w input attention;w attention inter;w attention output;w hysteresis;
+1;Results/20211026/Bernert_attention_nest_20211026-094840.png;0:02:53.552562;-50;0.2;0.5;-10;15;0.05;-5;0.1;0.01;1;0.5;10;5;0.7
+2;Results/20211026/Bernert_attention_nest_20211026-095137.png;0:02:56.508661;-40;50;0.5;-20;15;0.01;-30;10;0.2;1;10;0.5;10;1

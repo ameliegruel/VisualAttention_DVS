@@ -1,0 +1,5 @@
+Simulation;Input pattern;Output file name;Computation time;threshold Attention;tm Attention;tau refrac Attention;threshold Intermediate;tm Intermediate;tau refrac Intermediate;threshold Output;tm Output;tau refrac Output;w WTA inter;w input attention;w attention inter;w attention output;w hysteresis;
+1;patternGeneration/generatedPatterns/patternI_20211025_133733.npy;Results/20211026/Bernert_attention_nest_20211026-102545.png;0:02:52.333434;-40;2;1;-60;20;1;-55;40;2;1;10;2;2;2
+2;patternGeneration/generatedPatterns/patternI_20211025_133733.npy;Results/20211026/Bernert_attention_nest_20211026-102838.png;0:02:52.281073;-40;2;0.05;-5;0.5;2;-30;0.01;0.1;5;1;2;0.2;2
+3;patternGeneration/generatedPatterns/patternI_20211025_133733.npy;Results/20211026/Bernert_attention_nest_20211026-103136.png;0:02:57.748563;-10;5;0.01;-35;15;0.05;-30;5;0.05;5;5;0.7;0.5;2
+4;patternGeneration/generatedPatterns/patternI_20211025_133733.npy;Results/20211026/Bernert_attention_nest_20211026-103429.png;0:02:51.837871;-5;15;0.5;-10;5;5;-25;20;0.01;2;10;2;0.5;1
