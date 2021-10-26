@@ -7,17 +7,23 @@ From "An Attention-Based Spiking Neural Network for Unsupervised Spike-Sorting" 
 Run as : $ python Visual_attention.py nest
 """
 
+from numpy.lib.twodim_base import tri
+from pyNN.nest import projections
 from pyNN.space import *
 from pyNN.parameters import Sequence
 from pyNN.utility import get_simulator, init_logging, normalized_filename
 from pyNN.utility.plotting import DataTable, Figure, Panel
 from quantities import ms
 import matplotlib.pyplot as plt
-from patternGeneration import patternGenerator, events2spikes
+from patternGeneration import events2spikes
 import numpy as np
 import math
 import neo
 import datetime
+import sys
+from tqdm import tqdm
+
+start = datetime.datetime.now()
 
 ################# CONFIGURE SIMULATOR ############
 
@@ -27,10 +33,8 @@ sim, options = get_simulator(("--plot-figure", "Plot the simulation results to a
                              ("--attention","Run the network with the attention neuron", {"action": "store_true"}),
                              ("--fit-curve", "Calculate the best-fit curve to the weight-delta_t measurements", {"action": "store_true"}),
                              ("--dendritic-delay-fraction", "What fraction of the total transmission delay is due to dendritic propagation", {"default": 1}),
-                             ("--debug", "Print debugging information"))
-
-print(options)
-print(options.pattern)
+                             ("--debug", "Print debugging information"),
+                             ("--parameters", "Use arguments as network parameters", {"default": False, "nargs": '+'}))
 
 if options.debug:
     init_logging(None, debug=True)
@@ -87,15 +91,57 @@ if not options.pattern:
 else : 
     try:
         events = np.load(options.pattern)
+        events = events[:1000,]
     except (ValueError, FileNotFoundError, TypeError):
         print("Error: The input file has to be of format .npy")
         sys.exit()
     signal, x_input, y_input = events2spikes.ev2spikes(events, 3)
     t_data = np.max(events[::,3])
-    print(signal)
 
 
 ############################################### NETWORK #########################################################
+
+# set parameters according to parser arguments
+
+if not options.parameters :
+    # Attention parameters
+    thAttention = -50
+    tmAttention = 25
+    trAttention = 0.02
+    # Intermediate parameters
+    thIntermediate = -15
+    tmIntermediate = 0.05
+    trIntermediate = 0.05
+    # Output parameters
+    thOutput = -30
+    tmOutput = 0.03
+    trOutput = 0.3
+    # connections
+    w_WTA_inter = 10
+    w_input_attention = 10
+    w_attention_inter = 60
+    w_attention_output = 5
+    w_hysteresis = 1
+else : 
+    # Attention parameters
+    thAttention = options.parameters[0]
+    tmAttention = options.parameters[1]
+    trAttention = options.parameters[2]
+    # Intermediate parameters
+    thIntermediate = options.parameters[3]
+    tmIntermediate = options.parameters[4]
+    trIntermediate = options.parameters[5]
+    # Output parameters
+    thOutput = options.parameters[6]
+    tmOutput = options.parameters[7]
+    trOutput = options.parameters[8]
+    # connections
+    w_WTA_inter = options.parameters[9]
+    w_input_attention = options.parameters[10]
+    w_attention_inter = options.parameters[11]
+    w_attention_output = options.parameters[12]
+    w_hysteresis = options.parameters[13]
+
 
 # input spikes
 
@@ -110,35 +156,31 @@ Input.record("spikes")
 
 if options.attention :
     Attention_parameters = {
-        'tau_m': 0.025,     # membrane time constant (in ms)
-        'tau_refrac': 0.0,  # duration of refractory period (in ms)
-        # 'v_reset': 0.0,     # reset potential after a spike (in mV)
-        # 'v_rest': -65.0,    # resting membrane potential (in mV) !
-        'v_thresh': -40     # 108.1   # spike threshold (in mV) 
+        'tau_m': tmAttention,      # membrane time constant (in ms)
+        'tau_refrac': trAttention, # duration of refractory period (in ms)
+        'v_thresh': thAttention    # 108.1   # spike threshold (in mV) 
     }
     LIF_Attention = sim.IF_cond_exp(**Attention_parameters)
     Attention = sim.Population(1, LIF_Attention, label="Attention")
-    Attention.record("spikes")
+    Attention.record(("spikes","v"))
 
 Intermediate_parameters = {
-    'tau_m': 0.025,     # membrane time constant (in ms)
-    'tau_refrac': 0.05, # duration of refractory period (in ms)
-    # 'v_reset': 0.0,     # reset potential after a spike (in mV) 
-    # 'v_rest': 0.0,      # resting membrane potential (in mV) !
-    'v_thresh': -32,    # spike threshold (in mV) 
+    'tau_m': tmIntermediate,      # membrane time constant (in ms)
+    'tau_refrac': trIntermediate, # duration of refractory period (in ms)
+    'v_thresh': thIntermediate    # spike threshold (in mV) 
 }
 LIF_Intermediate = sim.IF_cond_exp(**Intermediate_parameters)
-Intermediate = sim.Population(60, LIF_Intermediate, label="Intermediate")
+Intermediate = sim.Population(20, LIF_Intermediate, label="Intermediate")
 Intermediate.record(("spikes","v"))
 
 Output_parameters = {
-    'tau_m': 3.0,       # membrane time constant (in ms)
-    'tau_refrac': 3.0,  # duration of refractory period (in ms)
-    'v_thresh': -15      # spike threshold (in mV) !
+    'tau_m': tmOutput,       # membrane time constant (in ms)
+    'tau_refrac': trOutput,  # duration of refractory period (in ms)
+    'v_thresh': thOutput     # spike threshold (in mV) !
 }
 LIF_Output = sim.IF_cond_exp(**Output_parameters)
-Output = sim.Population(10, LIF_Output, label="Output")
-Output.record("spikes","v")
+Output = sim.Population(5, LIF_Output, label="Output")
+Output.record(("spikes","v"))
 
 # connection input to intermediate 
 
@@ -149,12 +191,10 @@ Conn_input_inter = sim.Projection(
     receptor_type="excitatory",
     label="Connection input to intermediate"
 )
-# print(Input.size*Intermediate.size, len(list(Conn_input_inter.connections)))
-# print(list(Conn_input_inter.connections)[0].source,list(Conn_input_inter.connections)[0].target)
 
 # connection WTA inter
 
-FixedInhibitory_WTA = sim.StaticSynapse(weight=10)
+FixedInhibitory_WTA = sim.StaticSynapse(weight=w_WTA_inter)
 WTA = sim.Projection(
     Intermediate, Intermediate,
     connector=sim.AllToAllConnector(allow_self_connections=False),
@@ -166,7 +206,6 @@ WTA = sim.Projection(
 # connection inter to output
 
 Conn_inter_output = []
-
 for s in range(3):    # 50 synapses with delay from 1 to 50
     d = 0.05*s
     for action in ["excitatory","inhibitory"]:   # 100 synapses in total between each pre post pairs ? 
@@ -187,14 +226,13 @@ for s in range(3):    # 50 synapses with delay from 1 to 50
             label="Connection intermediate to output"
         )) 
 
-
 if options.attention : 
 
     # connection input to attention
     Conn_input_attention = sim.Projection(
         Input, Attention,
         connector=sim.AllToAllConnector(allow_self_connections=False),
-        synapse_type=sim.StaticSynapse(weight=10),
+        synapse_type=sim.StaticSynapse(weight=w_input_attention),
         receptor_type="excitatory",
         label="Connection input to attention"
     )
@@ -203,7 +241,7 @@ if options.attention :
     Conn_attention_inter = sim.Projection(
         Attention, Intermediate,
         connector=sim.AllToAllConnector(allow_self_connections=False),
-        synapse_type=sim.StaticSynapse(weight=60),
+        synapse_type=sim.StaticSynapse(weight=w_attention_inter),
         receptor_type="excitatory",
         label="Connection attention to intermediate"
     )
@@ -212,7 +250,7 @@ if options.attention :
     Conn_attention_output = sim.Projection(
         Attention, Output,
         connector=sim.AllToAllConnector(allow_self_connections=False),
-        synapse_type=sim.StaticSynapse(weight=10),
+        synapse_type=sim.StaticSynapse(weight=w_attention_output),
         receptor_type="inhibitory",
         label="Connection attention to output"
     )
@@ -221,7 +259,7 @@ if options.attention :
     Hysteresis = sim.Projection(
         Attention, Attention,
         connector=sim.OneToOneConnector(),
-        synapse_type=sim.StaticSynapse(weight=10.5),
+        synapse_type=sim.StaticSynapse(weight=w_hysteresis),
         receptor_type="excitatory",
         label="Connection attention to output"
     )
@@ -249,7 +287,8 @@ class WeightRecorder(object):
         self._weights = []
 
     def __call__(self, t):
-        print(t)
+        if t % 100 == 0:
+            print(t)
         if type(self.projection) != list:
             self._weights.append(self.projection.get('weight', format='list', with_address=False))
         elif type(self.projection) == list:
@@ -268,6 +307,21 @@ weight_recorder = WeightRecorder(sampling_interval=1.0, projection=Conn_inter_ou
 **************************************************************************************************
 """
 
+class LastSpikeRecorder(object):
+    
+    def __init__(self, sampling_interval, pop):
+        self.interval = sampling_interval
+        self.population = pop
+        self._spikes = np.zeros(self.population.size)
+    
+    def __call__(self, t):
+        try : 
+            self._spikes = np.array([t[-1] if t != [] else 0 for t in self.population.get_data().segments[0].spiketrains])
+        except IndexError:
+            pass
+        return t+self.interval
+
+
 class STDP_Input_Inter(object):
 
     def __init__(self, sampling_interval):
@@ -276,8 +330,7 @@ class STDP_Input_Inter(object):
         self.w = self.projection.get("weight", format="array")
         self.source = Input
         self.target = Intermediate
-        # self.l = len(list(self.projection.connections))
-
+        
         # STDP parameters
         self.tau_stdp_minus = 0
         self.tau_stdp_plus = 0.563
@@ -285,28 +338,20 @@ class STDP_Input_Inter(object):
         self.delta_w_post = -5.5*self.delta_w_pair
     
     def __call__(self, t):
-        print("input inter start", datetime.datetime.now())
-        try : 
-            # presynaptic spike times
-            t_pre = self.source.get_data().segments[0].spiketrains
-            t_pre = [t[-1] if t != [] else 0 for t in t_pre]
-            t_pre = np.array([list(t_pre) for i in range(self.target.size)]).T
-            
-            # postsynaptic spike times
-            t_post = self.target.get_data().segments[0].spiketrains
-            t_post = [t[-1] if t != [] else 0 for t in t_post]
-            t_post = np.array([list(t_post) for i in range(self.source.size)])
-            
-            delta_t = np.subtract(t_post, t_pre)
-            self.w = np.where(t_post > t - 1, self.w+self.delta_w_post, self.w)   # STDP
-            self.w = np.where(np.logical_and(np.greater_equal(self.tau_stdp_plus, delta_t), np.greater(delta_t, self.tau_stdp_minus)), self.w+self.delta_w_pair, self.w)
-        except IndexError : 
-            pass
+        t_pre = np.tile(input_spikes._spikes, (self.target.size, 1)).T             # presynaptic spike times
+        t_post = np.tile(intermediate_spikes._spikes, (self.source.size, 1))       # postsynaptic spike times
+        # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        # print(t_pre)
+        # print(t_pre.size)
+        # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        # print(t_post)
+        # print(t_post.size)
+        # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+
+        delta_t = np.subtract(t_post, t_pre)
+        self.w = np.where(t_post > t - 1, self.w+self.delta_w_post, self.w)        # STDP
+        self.w = np.where(np.logical_and(np.greater_equal(self.tau_stdp_plus, delta_t), np.greater(delta_t, self.tau_stdp_minus)), self.w+self.delta_w_pair, self.w)
         self.projection.set(weight=self.w)
-        # for idx in range(x_input, y_input, self.l):
-        #     print(idx)
-        #     list(self.projection.connections)[idx].weight=self.w.flat[idx]   
-        print("input inter stop", datetime.datetime.now())
         return t + self.interval
 
 
@@ -318,8 +363,8 @@ class STDP_Inter_Output(object):   # ajout thresholding !
         self.w = [synapse.get("weight", format="array") for synapse in self.projection]
         self.source = Intermediate
         self.target = Output
-        self.th = np.array([self.target.get("v_thresh") for n in range(self.target.size)])
-
+        self.th = np.array([self.target.get("v_thresh")]*self.target.size)
+        
         # STDP
         self.tau_stdp_minus = 0.2 # ms
         self.tau_stdp_plus = 3    # ms
@@ -341,41 +386,29 @@ class STDP_Inter_Output(object):   # ajout thresholding !
         self.delta_w_post_neg = -0.1*self.delta_w_pair_neg
 
     def __call__(self,t):
-        print("inter output start", datetime.datetime.now())
         for synapse in range(len(self.projection)) : 
-            try : 
-                # presynaptic spike times
-                t_pre = self.source.get_data().segments[0].spiketrains
-                t_pre = [t[-1] if t != [] else 0 for t in t_pre]
-                t_pre = np.array([list(t_pre) for i in range(self.target.size)]).T
+            t_pre = np.tile(intermediate_spikes._spikes, (self.target.size, 1)).T      # presynaptic spike times
+            t_post = np.tile(output_spikes._spikes, (self.source.size, 1))             # postsynaptic spike times
 
-                # postsynaptic spike times
-                t_post_target = self.target.get_data().segments[0].spiketrains
-                t_post_target = np.array([t[-1] if t != [] else 0 for t in t_post_target])
-                t_post_conn = np.array([list(t_post_target) for i in range(self.source.size)])
+            delta_t = np.subtract(t_post, t_pre) 
+            
+            if synapse % 2 == 0:   # excitatory
+                # STDP
+                self.w[synapse] = np.where(t_post > t - 1, self.w[synapse]+self.delta_w_post_pos, self.w[synapse])   
+                self.w[synapse] = np.where(np.logical_and(np.greater_equal(self.tau_stdp_plus, delta_t), np.greater(delta_t, self.tau_stdp_minus)), self.w[synapse]+self.delta_w_pair_pos, self.w[synapse])
+            elif synapse % 2 == 1: # inhibitory
+                # STDP
+                self.w[synapse] = np.where(t_post > t - 1, self.w[synapse]+self.delta_w_post_neg, self.w[synapse])
+                self.w[synapse] = np.where(np.logical_and(np.greater_equal(self.tau_stdp_plus, delta_t), np.greater(delta_t, self.tau_stdp_minus)), self.w[synapse]+self.delta_w_pair_neg, self.w[synapse])
 
-                delta_t = np.subtract(t_post_conn, t_pre) 
-                
-                if synapse % 2 == 0:   # excitatory
-                    # STDP
-                    self.w[synapse] = np.where(t_post_conn > t - 1, self.w[synapse]+self.delta_w_post_pos, self.w[synapse])   
-                    self.w[synapse] = np.where(np.logical_and(np.greater_equal(self.tau_stdp_plus, delta_t), np.greater(delta_t, self.tau_stdp_minus)), self.w[synapse]+self.delta_w_pair_pos, self.w[synapse])
-                elif synapse % 2 == 1: # inhibitory
-                    # STDP
-                    self.w[synapse] = np.where(t_post_conn > t - 1, self.w[synapse]+self.delta_w_post_neg, self.w[synapse])
-                    self.w[synapse] = np.where(np.logical_and(np.greater_equal(self.tau_stdp_plus, delta_t), np.greater(delta_t, self.tau_stdp_minus)), self.w[synapse]+self.delta_w_pair_neg, self.w[synapse])
+            # IP
+            self.th = np.where(output_spikes._spikes > t - 1, max(np.max(self.th*self.delta_th_post),self.th_min), self.th)
+            increase = np.zeros(self.target.size)
+            increase = np.sum(np.where(np.logical_and(np.greater_equal(self.tau_ip_plus, delta_t), np.greater(delta_t, self.tau_ip_minus)), min(np.min(increase+self.delta_th_pair*self.w[synapse]), self.th_max), increase), axis=0)
+            self.th = self.th + increase
 
-                # IP
-                self.th = np.where(t_post_target > t - 1, np.max(self.th*self.delta_th_post, self.th_min), self.th)
-                increase = np.zeros(self.target.size)
-                increase = np.sum(np.where(np.logical_and(np.greater_equal(self.tau_ip_plus, delta_t), np.greater(delta_t, self.tau_ip_minus)), np.min(increase+self.delta_th_pair*self.w[synapse], self.th_max), increase), axis=0)
-                self.th = self.th + increase
-
-            except IndexError : 
-                pass
             self.projection[synapse].set(weight=self.w[synapse])
             self.target.set(v_thresh=list(self.th))
-        print("inter output stop", datetime.datetime.now())
         return t + self.interval
 
 
@@ -387,34 +420,23 @@ class STP_Input_Attention(object):
         self.w = self.projection.get("weight", format="array")
         self.source = Input 
         self.target = Attention
-        self.th = np.array([self.target.get("v_thresh") for n in range(self.target.size)])
+        self.th = np.array([self.target.get("v_thresh")]*self.target.size)
 
         # STP
         self.tau_stp = 5 # ms
         self.f_d = 0.0161
 
     def __call__(self, t):
-        print("STP start", datetime.datetime.now())
-        try : 
-            # presynaptic spike times
-            t_pre = self.source.get_data().segments[0].spiketrains
-            t_pre = [t[-1] if t != [] else 0 for t in t_pre]
-            t_pre = np.array(t_pre).T
-            
-            # postsynaptic spike times
-            t_post = self.target.get_data().segments[0].spiketrains
-            t_post = [t[-1] if t != [] else 0 for t in t_post]
-            t_post = np.array([list(t_post) for i in range(self.source.size)])
-            
-            delta_t = np.subtract(t_post, t_pre)
-            dirac = np.where(delta_t == 0, 1, 0)
-            print(dirac)
-            self.w = self.w + (1-self.w)/self.tau_stp - np.sum(self.w * self.f_d * dirac)
+        # print("STP start", datetime.datetime.now())
+        t_pre = input_spikes._spikes.T                                 # presynaptic spike times
+        t_post = np.tile(attention_spikes._spikes, (self.source.size, 1))    # postsynaptic spike times
+        
+        delta_t = np.subtract(t_post, t_pre)
+        dirac = np.where(delta_t == 0, 1, 0)
+        self.w = self.w + (1-self.w)/self.tau_stp - np.sum(self.w * self.f_d * dirac)
 
-        except IndexError : 
-            pass
         self.projection.set(weight=self.w)
-        print("STP stop", datetime.datetime.now())
+        # print("STP stop", datetime.datetime.now())
         return t + self.interval
 
 
@@ -429,30 +451,31 @@ class Inhibition_Attention_Output(object):
         self.v = self.target.get("v_rest")
     
     def __call__(self, t):
-        print("Inhibition start", datetime.datetime.now())
+        # print("Inhibition start", datetime.datetime.now())
         try:
             th = self.target.get("v_thresh")
-            print("v",self.v)
+            # print("v",self.v)
             self.v = th * self.f_inhib 
-            print("v",self.v)
+            # print("v",self.v)
             self.target.initialize(v=self.v)
         except IndexError: 
             pass
-        print("Inhibition stop", datetime.datetime.now())
+        # print("Inhibition stop", datetime.datetime.now())
         return t + self.interval
 
-
+input_spikes =        LastSpikeRecorder(sampling_interval=1.0, pop=Input)
+intermediate_spikes = LastSpikeRecorder(sampling_interval=1.0, pop=Intermediate)
+output_spikes =       LastSpikeRecorder(sampling_interval=1.0, pop=Output)
+attention_spikes =    LastSpikeRecorder(sampling_interval=1.0, pop=Attention) 
 
 STDP1 = STDP_Input_Inter(sampling_interval=1.0)
 STDP2 = STDP_Inter_Output(sampling_interval=1.0)
-
 if options.attention:
     STP   = STP_Input_Attention(sampling_interval=1.0)
     lateral_inhib = Inhibition_Attention_Output(sampling_interval=1.0)
-    sim.run(t_data, callbacks=[weight_recorder, STDP1, STDP2, STP, lateral_inhib])
+    sim.run(t_data, callbacks=[weight_recorder, input_spikes, intermediate_spikes, output_spikes, attention_spikes, STDP1, STDP2, STP, lateral_inhib])
 else : 
-    sim.run(t_data, callbacks=[weight_recorder, STDP1, STDP2])
-
+    sim.run(t_data, callbacks=[weight_recorder, input_spikes, intermediate_spikes, output_spikes, STDP1, STDP2])
 print("SIMULATION DONE")
 
 
@@ -465,11 +488,11 @@ filename = normalized_filename("Results", "Bernert_attention", "pkl", options.si
 # Output.write_data(filename, annotations={'script_name': __file__})
 
 Input_data = Input.get_data().segments[0]
-print("Input spike times : %s" % Input_data.spiketrains)
+# print("Input spike times : %s" % Input_data.spiketrains)
 Inter_data = Intermediate.get_data().segments[0]
-print("Intermediate spike times : %s" % Inter_data.spiketrains)
+# print("Intermediate spike times : %s" % Inter_data.spiketrains)
 Output_data = Output.get_data().segments[0]
-print("Output spike times: %s" % Output_data.spiketrains)
+# print("Output spike times: %s" % Output_data.spiketrains)
 
 if options.attention :
     Attention_data = Attention.get_data().segments[0]
@@ -478,20 +501,17 @@ if options.attention :
 weights = weight_recorder.get_weights()
 final_weights = np.array(weights[-1])
 deltas = dt * np.arange(Input.size*Intermediate.size // 2, -Input.size*Intermediate.size // 2, -1)
-print("Final weights: %s" % final_weights)
-print("deltas : ", deltas)
+# print("Final weights: %s" % final_weights)
+# print("deltas : ", deltas)
 
 
 if options.fit_curve:
     plasticity_data = DataTable(deltas, final_weights)
-    print(len(plasticity_data.x),len(plasticity_data.y))
-    print(plasticity_data.x, plasticity_data.y)
     def double_exponential(t, t0, w0, wp, wn, tau):
         return w0 + np.where(t >= t0, wp * np.exp(-(t - t0) / tau), wn * np.exp((t - t0) / tau))
     p0 = (-1.0, 5e-8, 1e-8, -1.2e-8, 20.0)
     popt, pcov = plasticity_data.fit_curve(double_exponential, p0, ftol=1e-10)
-    print("Best fit parameters: t0={0}, w0={1}, wp={2}, wn={3}, tau={4}".format(*popt))
-
+    
 if options.plot_figure:
     figure_filename = filename.replace("pkl", "png")
     if options.attention :
@@ -505,10 +525,16 @@ if options.plot_figure:
             
             # raster plot of the Attention neuron spike times
             Panel(Attention_data.spiketrains, ylabel="Attention spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
+            
+            # membrane potential of Attention neuron
+            Panel(Attention_data.filter(name='v')[0], ylabel="Membrane potential (mV) - attention", yticks=True, xlim=(0, t_data), linewidth=0.2, legend=False),
 
             # membrane potential of the postsynaptic neuron
-            Panel(Inter_data.filter(name='v')[0], ylabel="Membrane potential (mV)", yticks=True, xlim=(0, t_data), linewidth=0.2),
+            Panel(Inter_data.filter(name='v')[0], ylabel="Membrane potential (mV) - intermediate", yticks=True, xlim=(0, t_data), linewidth=0.2, legend=False),
             
+            # membrane potential of the postsynaptic neuron
+            Panel(Output_data.filter(name='v')[0], ylabel="Membrane potential (mV) - output", yticks=True, xlim=(0, t_data), linewidth=0.2, legend=False),
+
             # evolution of the synaptic weights with time
             Panel(weights, xticks=True, yticks=True, xlabel="Time (ms)", ylabel="Intermediate Output Weight",
                     legend=False, xlim=(0, t_data)),
@@ -529,9 +555,9 @@ if options.plot_figure:
             Panel(Inter_data.spiketrains, ylabel="Intermediate spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
             # raster plot of the Output neuron spike times
             Panel(Output_data.spiketrains, ylabel="Output spikes", yticks=True, markersize=0.2, xlim=(0, t_data)),
-            
-            # membrane potential of the postsynaptic neuron
-            Panel(Inter_data.filter(name='v')[0], ylabel="Membrane potential (mV)", yticks=True, xlim=(0, t_data), linewidth=0.2),
+
+            # membrane potential of the postsynaptic neuron of Intermediate neurons
+            Panel(Inter_data.filter(name='v')[0], ylabel="Membrane potential (mV) - intermediate", yticks=True, xlim=(0, t_data), linewidth=0.2, legend=False),
             
             # evolution of the synaptic weights with time
             Panel(weights, xticks=True, yticks=True, xlabel="Time (ms)", ylabel="Intermediate Output Weight",
@@ -551,5 +577,6 @@ if options.plot_figure:
 **************************************************************************************************
 """
 
+print("\n### Temps de calcul :", datetime.datetime.now()-start,"\n")
 
 sim.end()
